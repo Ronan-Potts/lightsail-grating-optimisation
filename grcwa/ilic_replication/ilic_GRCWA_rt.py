@@ -36,6 +36,7 @@ measure distance in units of the Bohr radius.
 
 # Defining Ilic dimensions
 d = 1.8  # unit cell width
+dy = 1e-4
 x1 = 0.85*d # positions of blocks in unit cell
 x2 = 0.25*d 
 w1 = 0.15*d # width of blocks in unit cell
@@ -66,13 +67,13 @@ The lattice is made below.
 '''
 # Lattice constants. I will consider a lattice with square-shaped unit cells of size d x d (in natural units specified above)
 L1 = [d, 0]
-L2 = [0, 1e-4]
+L2 = [0, dy]
 
 # Unit cell geometry (rows, cols)
 cell_geometry = np.ones((Nx,Ny), dtype=float)*E_vacuum
 
 x0 = np.linspace(0,d,Nx)
-y0 = np.linspace(0,d,Ny)
+y0 = np.linspace(0,dy,Ny)
 x, y = np.meshgrid(x0,y0, indexing='ij')
 # The design will be completely uniform in the y-direction.
 filter = (abs(x-x1) < w1/2) | (abs(x-x2) < w2/2)
@@ -110,7 +111,7 @@ for theta in thetas:
    obj.Init_Setup()
 
    # planewave excitation
-   planewave={'p_amp':1,'s_amp':0,'p_phase':0,'s_phase':0}
+   planewave={'p_amp':0,'s_amp':1,'p_phase':0,'s_phase':0}
    obj.MakeExcitationPlanewave(planewave['p_amp'],planewave['p_phase'],planewave['s_amp'],planewave['s_phase'],order = 0)
    # eps in patterned layer
    obj.GridLayer_geteps(cell_geometry.flatten())

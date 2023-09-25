@@ -77,10 +77,10 @@ filter = (abs(x-x1) <= w1/2) | (abs(x-x2) <= w2/2)
 cell_geometry[filter] = E_Si
 
 # Visualising the unit cell
-# plt.imshow(cell_geometry, interpolation='nearest', aspect='auto')
-# plt.xlabel("y")
-# plt.ylabel("x")
-# plt.show()
+plt.imshow(cell_geometry, interpolation='nearest', aspect='auto')
+plt.xlabel("y")
+plt.ylabel("x")
+plt.show()
 
 '''
 Setting up the RCWA

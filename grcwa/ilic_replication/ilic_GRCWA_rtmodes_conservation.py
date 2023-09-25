@@ -5,9 +5,9 @@ from matplotlib import pyplot as plt
 Being numerical in nature, I need to define the truncation order of the fourier decomposition as well as the resolution of the unit cell.
 '''
 # Truncation order
-nG = 30
+nG = 50
 # Resolution 
-Nx = 1000
+Nx = 10000
 Ny = 1
 
 '''
@@ -34,7 +34,7 @@ measure distance in units of the Bohr radius.
 '''
 # Defining Ilic dimensions
 d = 1.8  # unit cell width
-dy = 1e-1
+dy = 1e-4
 x1 = 0.85*d # positions of blocks in unit cell
 x2 = 0.25*d 
 w1 = 0.15*d # width of blocks in unit cell
@@ -45,7 +45,7 @@ t = 0.5  # also equal to thickness of substrate layer
 
 wavelength = 1.5
 freq = 1./wavelength
-thetas = np.linspace(-20*np.pi/180, 20*np.pi/180, 161)
+thetas = np.linspace(-20*np.pi/180, 20*np.pi/180, 81)
 
 '''
 By convention, GRCWA uses:
@@ -70,17 +70,17 @@ L2 = [0, dy]
 cell_geometry = np.ones((Nx,Ny), dtype=float)*E_vacuum
 
 x0 = np.linspace(0,d,Nx)
-y0 = np.linspace(0,d,Ny)
+y0 = np.linspace(0,dy,Ny)
 x, y = np.meshgrid(x0,y0, indexing='ij')
 # The design will be completely uniform in the y-direction.
 filter = (abs(x-x1) <= w1/2) | (abs(x-x2) <= w2/2)
 cell_geometry[filter] = E_Si
 
 # Visualising the unit cell
-# plt.imshow(cell_geometry, interpolation='nearest', aspect='auto')
-# plt.xlabel("y")
-# plt.ylabel("x")
-# plt.show()
+plt.imshow(cell_geometry, interpolation='nearest', aspect='auto')
+plt.xlabel("y")
+plt.ylabel("x")
+plt.show()
 
 '''
 Setting up the RCWA

@@ -121,13 +121,13 @@ def fun_nlopt(x,gradn):
     # Visualising the geometry ____________________________________________________________________
     if ctrl == 0:
         global anim1
-        anim1 = ax1.imshow(np.reshape(x, (Nx,Ny)), interpolation='nearest', vmin=0, vmax=E_Si, aspect='auto')
+        anim1 = ax1.imshow(np.reshape(x, (Nx,Ny)), interpolation='nearest', vmin=1, vmax=E_Si, aspect='auto')
         cbar = plt.colorbar(anim1)
         cbar.set_label("Permittivity")
         plt.xlabel("y")
         plt.ylabel("x")
         plt.title(r"Step {}, $R = {}$".format(ctrl, round(y,5)))
-        plt.savefig('ISB B/grcwa/optimisation/figs/permittivity/ilic_GRCWA_optimisation_permittivity_R_initial')
+        plt.savefig('grcwa/optimisation/figs/permittivity/ilic_GRCWA_optimisation_permittivity_R_initial')
     else:
         anim1.set_data(np.reshape(x, (Nx,Ny)))
         plt.title(r"Step {}, $R = {}$".format(ctrl, round(y,5)))
@@ -173,8 +173,8 @@ x = opt.optimize(init)
 
 
 
-plt.imshow(np.reshape(x, (Nx,Ny)), interpolation='nearest', vmin=0, vmax=E_Si, aspect='auto')
+plt.imshow(np.reshape(x, (Nx,Ny)), interpolation='nearest', vmin=1, vmax=E_Si, aspect='auto')
 plt.xlabel("y")
 plt.ylabel("x")
 plt.title(r"Final result, Step {}, $R_0 = {}$".format(ctrl, round(fun(x),5)))
-plt.savefig('ISB B/grcwa/optimisation/figs/permittivity/ilic_GRCWA_optimisation_permittivity_R_final')
+plt.savefig('grcwa/optimisation/figs/permittivity/ilic_GRCWA_optimisation_permittivity_R_final')

@@ -1,4 +1,4 @@
-""" Topology optimization of reflection of a single patterned layers ."""
+""" Topology optimization of reflection of a single patterned layer."""
 """ Nlopt is needed. For some reason does not work with latest version of numpy. Works fine with numpy 1.25.0 """
 
 import grcwa
@@ -8,7 +8,6 @@ import numpy as np
 import autograd.numpy as npgrad
 # from autograd import grad
 import nlopt
-from autograd import grad
 
 import matplotlib.pyplot as plt
 
@@ -45,7 +44,7 @@ L2 = [0, dy]
 
 '''
 Cell geometry
-    vars: an array, vars = [w1,w2]
+    vars: an array, vars = [x1,w1,x2,w2]
 '''
 def get_cell_geometry(vars):
     # Unit cell geometry (rows, cols)
@@ -55,7 +54,7 @@ def get_cell_geometry(vars):
     y0 = np.linspace(0,dy,Ny)
     x, y = np.meshgrid(x0,y0, indexing='ij')
     # The design will be completely uniform in the y-direction.
-    filter = (abs(x-x1) <= vars[0]/2) | (abs(x-x2) <= vars[1]/2)
+    filter = (abs(x-vars[0]) <= vars[1]/2) | (abs(x-vars[2]) <= vars[3]/2)
     x[filter] = E_Si
     return x
 
@@ -75,7 +74,7 @@ planewave={'p_amp':0,'s_amp':1,'p_phase':0,'s_phase':0}
 '''
 Cost function for optimisation.
 
-       x:   The dielectric constant on the 2D grids of size Nx*Ny
+       vars:   [x1,w1,x2,w2]
        
     Qabs:   A parameter for relaxation to better approach global optimal, at Qabs = inf, it will describe the real physics.
             It also be used to resolve the singular matrix issues by setting a large but finite Qabs, e.g. Qabs = 1e5
@@ -133,16 +132,18 @@ def fun_nlopt(vars,gradn):
     '''
     autoGrad doesn't work well here as space is discretised. Instead I will numerically evaluate the gradient.
     '''
-    delw1_fun = fun([vars[0]+d/Nx, vars[1]     ])      - fun(vars)
-    delw2_fun = fun([vars[0],      vars[1]+d/Nx])      - fun(vars)
-    gradn[:] = [delw1_fun, delw2_fun]
+    delx1_fun = fun([vars[0]+d/Nx, vars[1],      vars[2],      vars[3]])      - fun(vars)
+    delw1_fun = fun([vars[0],      vars[1]+d/Nx, vars[2],      vars[3]])      - fun(vars)
+    delx2_fun = fun([vars[0],      vars[1],      vars[2]+d/Nx, vars[3]])      - fun(vars)
+    delw2_fun = fun([vars[0],      vars[1],      vars[2],      vars[3]+d/Nx]) - fun(vars)
+    gradn[:] = [delx1_fun, delw1_fun, delx2_fun, delw2_fun]
     y = fun(vars)
 
     # Printing parameters to command line
     if ctrl == 0:
-        print("{:<8} {:<8} {:<8} {:<8}".format("Step", "R", 'w1', 'w2'))
+        print("{:<8} {:<8} {:<8} {:<8} {:<8} {:<8}".format("Step", "R", 'x1', 'w1', 'x2', 'w2'))
     else:
-        print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f}".format(ctrl, y, vars[0],vars[1]))
+        print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f}".format(ctrl, y, vars[0],vars[1],vars[2],vars[3]))
     # Visualising the geometry ____________________________________________________________________
     if ctrl == 0:
         global anim1
@@ -152,7 +153,7 @@ def fun_nlopt(vars,gradn):
         plt.xlabel("y")
         plt.ylabel("x")
         plt.title(r"Step {}, $R = {}$".format(ctrl, round(y,5)))
-        plt.savefig('ISB B/grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width_R_initial')
+        plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_initial')
 
     else:
         anim1.set_data(get_cell_geometry(vars))
@@ -169,10 +170,10 @@ def fun_nlopt(vars,gradn):
 NLOPT Setup
 '''
 # set up NLOPT
-ndof = 2
-init = [w1,w2]
-lb = [0,0]
-ub = [d,d]
+ndof = 4
+init = [x1,w1,x2,w2]
+lb = [0,0,0,0]
+ub = [d,d,d,d]
 
 opt = nlopt.opt(nlopt.LD_MMA, ndof)
 opt.set_lower_bounds(lb)
@@ -189,7 +190,7 @@ plt.imshow(get_cell_geometry(vars), interpolation='nearest', vmin=0, vmax=E_Si, 
 plt.xlabel("y")
 plt.ylabel("x")
 plt.title(r"Final result, Step {}, $R = {}$".format(ctrl, round(fun(vars),5)))
-plt.savefig('ISB B/grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width_R_final')
+plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_final')
 '''
 PROBLEMS:
 

@@ -74,7 +74,7 @@ planewave={'p_amp':0,'s_amp':1,'p_phase':0,'s_phase':0}
 '''
 Cost function for optimisation.
 
-       vars:   [x1,w1,x2,w2]
+       x:   The dielectric constant on the 2D grids of size Nx*Ny
        
     Qabs:   A parameter for relaxation to better approach global optimal, at Qabs = inf, it will describe the real physics.
             It also be used to resolve the singular matrix issues by setting a large but finite Qabs, e.g. Qabs = 1e5
@@ -153,7 +153,7 @@ def fun_nlopt(vars,gradn):
         plt.xlabel("y")
         plt.ylabel("x")
         plt.title(r"Step {}, $R = {}$".format(ctrl, round(y,5)))
-        plt.savefig('ISB B/grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_initial')
+        plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_initial')
 
     else:
         anim1.set_data(get_cell_geometry(vars))
@@ -190,7 +190,7 @@ plt.imshow(get_cell_geometry(vars), interpolation='nearest', vmin=0, vmax=E_Si, 
 plt.xlabel("y")
 plt.ylabel("x")
 plt.title(r"Final result, Step {}, $R = {}$".format(ctrl, round(fun(vars),5)))
-plt.savefig('ISB B/grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_final')
+plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_final')
 '''
 PROBLEMS:
 

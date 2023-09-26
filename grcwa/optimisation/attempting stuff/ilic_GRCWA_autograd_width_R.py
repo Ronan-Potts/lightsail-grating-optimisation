@@ -1,4 +1,4 @@
-""" Topology optimization of reflection of a single patterned layer."""
+""" Topology optimization of reflection of a single patterned layers ."""
 """ Nlopt is needed. For some reason does not work with latest version of numpy. Works fine with numpy 1.25.0 """
 
 import grcwa
@@ -6,8 +6,8 @@ grcwa.set_backend('autograd')  # important!!
 
 import numpy as np
 import autograd.numpy as npgrad
-# from autograd import grad
 import nlopt
+from autograd import grad
 
 import matplotlib.pyplot as plt
 
@@ -17,7 +17,7 @@ Discretisation values
 # Truncation order
 nG = 30
 # Resolution 
-Nx = 10000
+Nx = 100
 Ny = 1
 
 '''
@@ -35,28 +35,58 @@ h = 0.5  # thickness of resonator layer
 t = 0.5  # also equal to thickness of substrate layer
 
 E_vacuum = 1.
-E_Si = 3.5**2    # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
+E_Si = 3.5**2     # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
 E_SiO2 = 1.45**2  # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
 
 # Lattice constants. I will consider a lattice with square-shaped unit cells of size d x d (in natural units specified above)
 L1 = [d, 0]
 L2 = [0, dy]
 
+def boundary_indices(x):
+    global E_Si
+    # Define boundary permittivities
+    eps_1d = x[:,0]
+    boundary_indices = []
+    for i in range(1,len(eps_1d)-1):
+        lower_neighbor = eps_1d[i-1]
+        current = eps_1d[i]
+        upper_neighbor = eps_1d[i+1]
+        if current == E_Si and (lower_neighbor == E_Si or upper_neighbor == E_Si) and (lower_neighbor != upper_neighbor):
+            # then we are at a boundary
+            boundary_indices.append(i)
+    return boundary_indices
 '''
 Cell geometry
-    vars: an array, vars = [x1,w1,x2,w2]
+    vars: an array, vars = [eps1, eps2] which contains the permittivities at the edges of each element.
 '''
 def get_cell_geometry(vars):
+    
     # Unit cell geometry (rows, cols)
-    x = np.ones((Nx,Ny), dtype=float)*E_vacuum
+    cell_geometry = np.ones((Nx,Ny), dtype=float)*E_vacuum
 
     x0 = np.linspace(0,d,Nx)
     y0 = np.linspace(0,dy,Ny)
     x, y = np.meshgrid(x0,y0, indexing='ij')
+
     # The design will be completely uniform in the y-direction.
-    filter = (abs(x-vars[0]) <= vars[1]/2) | (abs(x-vars[2]) <= vars[3]/2)
-    x[filter] = E_Si
-    return x
+    filter = (abs(x-x1) <= vars[0]/2) | (abs(x-x2) <= vars[1]/2)
+    cell_geometry[filter] = E_Si
+
+    # What proportion of the width overhangs into a slice?
+    prop_w1 = (vars[0]/(2*Nx)) % 1
+    prop_w2 = (vars[1]/(2*Nx)) % 1
+
+    eps_w1 = 1 + 11*prop_w1
+    eps_w2 = 1 + 11*prop_w2
+
+    boundary_i = boundary_indices(cell_geometry)
+    lower_boundary = boundary_i[0:2]
+    upper_boundary = boundary_i[2:]
+    
+    cell_geometry[lower_boundary,:] = eps_w1
+    cell_geometry[upper_boundary,:] = eps_w2
+
+    return cell_geometry
 
 '''
 Light approach
@@ -125,25 +155,18 @@ fig1, ax1 = plt.subplots()
 ctrl = 0
 Qabs = npgrad.inf
 fun = lambda vars: cost_function(vars,Qabs)
-# grad_fun = grad(fun)
+grad_fun = grad(fun)
 def fun_nlopt(vars,gradn):
     global ctrl
-    # gradn[:] = grad_fun(vars)
-    '''
-    autoGrad doesn't work well here as space is discretised. Instead I will numerically evaluate the gradient.
-    '''
-    delx1_fun = fun([vars[0]+d/Nx, vars[1],      vars[2],      vars[3]])      - fun(vars)
-    delw1_fun = fun([vars[0],      vars[1]+d/Nx, vars[2],      vars[3]])      - fun(vars)
-    delx2_fun = fun([vars[0],      vars[1],      vars[2]+d/Nx, vars[3]])      - fun(vars)
-    delw2_fun = fun([vars[0],      vars[1],      vars[2],      vars[3]+d/Nx]) - fun(vars)
-    gradn[:] = [delx1_fun, delw1_fun, delx2_fun, delw2_fun]
+    # AVM: dC/dw = 1/(e-1)  *  dC/de
+    gradn[:] = grad_fun(vars)
     y = fun(vars)
 
     # Printing parameters to command line
     if ctrl == 0:
-        print("{:<8} {:<8} {:<8} {:<8} {:<8} {:<8}".format("Step", "R", 'x1', 'w1', 'x2', 'w2'))
+        print("{:<8} {:<8} {:<8} {:<8}".format("Step", "R", 'w1', 'w2'))
     else:
-        print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f}".format(ctrl, y, vars[0],vars[1],vars[2],vars[3]))
+        print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f}".format(ctrl, y, vars[0],vars[1]))
     # Visualising the geometry ____________________________________________________________________
     if ctrl == 0:
         global anim1
@@ -153,7 +176,7 @@ def fun_nlopt(vars,gradn):
         plt.xlabel("y")
         plt.ylabel("x")
         plt.title(r"Step {}, $R = {}$".format(ctrl, round(y,5)))
-        plt.savefig('ISB B/grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_initial')
+        plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width_R_initial')
 
     else:
         anim1.set_data(get_cell_geometry(vars))
@@ -170,10 +193,10 @@ def fun_nlopt(vars,gradn):
 NLOPT Setup
 '''
 # set up NLOPT
-ndof = 4
-init = [x1,w1,x2,w2]
-lb = [0,0,0,0]
-ub = [d,d,d,d]
+ndof = 2
+init = [w1,w2]
+lb = [0,0]
+ub = [d,d]
 
 opt = nlopt.opt(nlopt.LD_MMA, ndof)
 opt.set_lower_bounds(lb)
@@ -190,7 +213,7 @@ plt.imshow(get_cell_geometry(vars), interpolation='nearest', vmin=0, vmax=E_Si, 
 plt.xlabel("y")
 plt.ylabel("x")
 plt.title(r"Final result, Step {}, $R = {}$".format(ctrl, round(fun(vars),5)))
-plt.savefig('ISB B/grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_final')
+plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width_R_final')
 '''
 PROBLEMS:
 

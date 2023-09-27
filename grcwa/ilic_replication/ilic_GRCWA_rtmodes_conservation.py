@@ -17,9 +17,9 @@ of subwavelength thickness. The side-view looks like
 
      w_1      w_2
   <------>   <--->
-   ______     ____               ^ z
-  |      |   |    |              |
-__|      |___|    |___           X-----> x
+   ____     ______               ^ z
+  |    |   |      |              |
+__|    |___|      |___           X-----> x
 -----|---------|----->            y
     x_1       x_2
 
@@ -27,7 +27,7 @@ __|      |___|    |___           X-----> x
 
 The resonators are made of silicon, while the substrate is SiO2 (silicon dioxide). The
 height of both the resonators and the substrate is 0.5 microns. Ilic & Atwater use
-d = 1.8 microns; x_1 = 0.25d; x_2 = 0.85d; w_1 = 0.15d; w_2 = 0.35d. 
+d = 1.8 microns; x_1 = 0.25d; x_2 = 0.85d; w_1 = 0.35d; w_2 = 0.15d. 
 
 They also assume an incident beam of lambda = 1.5 microns. Note that natural units
 measure distance in units of the Bohr radius. 
@@ -35,10 +35,10 @@ measure distance in units of the Bohr radius.
 # Defining Ilic dimensions
 d = 1.8  # unit cell width
 dy = 1e-4
-x1 = 0.85*d # positions of blocks in unit cell
-x2 = 0.25*d 
-w1 = 0.15*d # width of blocks in unit cell
-w2 = 0.35*d
+x1 = 0.25*d # positions of blocks in unit cell
+x2 = 0.85*d 
+w1 = 0.35*d # width of blocks in unit cell
+w2 = 0.15*d
 
 h = 0.5  # thickness of resonator layer
 t = 0.5  # also equal to thickness of substrate layer
@@ -170,7 +170,7 @@ plt.title("Reflection and transmission coefficients for asymmetric Ilic-style gr
 plt.ylim([0,1.])
 plt.xlim([-20,20])
 
-plt.savefig('ISB B/grcwa/ilic_replication/figs/ilic_GRCWA_rtmodes__conservation_nG{}'.format(nG))
+plt.savefig('grcwa/ilic_replication/figs/ilic_GRCWA_rtmodes__conservation_nG{}'.format(nG))
 plt.show()
 
 

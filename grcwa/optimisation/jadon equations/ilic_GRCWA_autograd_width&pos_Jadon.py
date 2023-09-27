@@ -111,10 +111,24 @@ def cost_function(vars,Qabs):
     '''
     obj.MakeExcitationPlanewave(planewave['p_amp'],planewave['p_phase'],planewave['s_amp'],planewave['s_phase'],order = 0)    
     obj.GridLayer_geteps(cell_geometry.flatten())
+
+    
     # compute reflection and transmission by order
-    # Ri(Ti) has length obj.nG, to see which order, check obj.G; too see which kx,ky, check obj.kx obj.ky
-    R,T= obj.RT_Solve(normalize=1)
-    return R
+    # Ri(Ti) has length obj.nG, to see which order, check obj.G; to see which kx,ky, check obj.kx obj.ky
+    Ri,Ti= obj.RT_Solve(byorder=1)
+    ords = obj.G # Returns a list of tuples [ord1, ord2] where ord1 is the order in the L1 direction, while ord2 is the order in the L2 direction.
+
+    # Compute the reflectance and transmittance for a particular theta at various orders
+    R0 = sum(Ri[ords[:,0] == 0])
+    R1 = sum(Ri[ords[:,0] == 1])
+    Rn1 = sum(Ri[ords[:,0] == -1])
+    T0 = sum(Ti[ords[:,0] == 0])
+    T1 = sum(Ti[ords[:,0] == 1])
+    Tn1 = sum(Ti[ords[:,0] == -1])
+    e0 = (R0 + T0)/(sum(Ri) + sum(Ti))
+    e1 = (R1 + T1)/(sum(Ri) + sum(Ti))
+    en1 = (Rn1 + Tn1)/(sum(Ri) + sum(Ti))
+    return 2*e0 + (e1 + en1)*(1 + np.sqrt( 1 - (wavelength/d)**2 ))
 
 # For animated figure ##############
 plt.ion()
@@ -141,7 +155,7 @@ def fun_nlopt(vars,gradn):
 
     # Printing parameters to command line
     if ctrl == 0:
-        print("{:<8} {:<8} {:<8} {:<8} {:<8} {:<8}".format("Step", "R", 'x1', 'w1', 'x2', 'w2'))
+        print("{:<8} {:<8} {:<8} {:<8} {:<8} {:<8}".format("Step", "Term 2", 'x1', 'w1', 'x2', 'w2'))
     else:
         print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f}".format(ctrl, y, vars[0],vars[1],vars[2],vars[3]))
     # Visualising the geometry ____________________________________________________________________
@@ -152,12 +166,12 @@ def fun_nlopt(vars,gradn):
         cbar.set_label("Permittivity")
         plt.xlabel("y")
         plt.ylabel("x")
-        plt.title(r"Step {}, $R = {}$".format(ctrl, round(y,5)))
-        plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_initial')
+        plt.title("Step {}, Term 2 = {}".format(ctrl, round(y,5)))
+        plt.savefig('grcwa/optimisation/figs/jadon/ilic_GRCWA_optimisation_width&pos_Jadon_initial')
 
     else:
         anim1.set_data(get_cell_geometry(vars))
-        plt.title(r"Step {}, $R = {}$".format(ctrl, round(y,5)))
+        plt.title("Step {}, Term 2 = {}".format(ctrl, round(y,5)))
         fig1.canvas.flush_events()
     # _____________________________________________________________________________________________
     ctrl += 1
@@ -189,12 +203,5 @@ vars = opt.optimize(init)
 plt.imshow(get_cell_geometry(vars), interpolation='nearest', vmin=0, vmax=E_Si, aspect='auto')
 plt.xlabel("y")
 plt.ylabel("x")
-plt.title(r"Final result, Step {}, $R = {}$".format(ctrl, round(fun(vars),5)))
-plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_final')
-'''
-PROBLEMS:
-
- 1) gradn[:] is zero. Not sure why. Is likely due to small changes in 'vars' which cause no change in get_cell_geometry due to discretisation.
- 2) I can't decrease Nx by too much - it is limited by the size of d, where larger d requires larger Nx for indexing purposes. GRCWA seems to
-    discretise in fixed amounts at some stage (not very good). This is likely the cause of the problem (1).
-'''
+plt.title("Final result, Step {}, Term 2 = {}".format(ctrl, round(fun(vars),5)))
+plt.savefig('grcwa/optimisation/figs/jadon/ilic_GRCWA_optimisation_width&pos_Jadon_final')

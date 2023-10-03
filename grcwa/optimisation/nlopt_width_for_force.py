@@ -210,6 +210,11 @@ def cost_function(vars,Qabs):
     En1_fun = lambda theta: En1_func(theta, cell_geometry)
     pEn1_pTheta = grad(En1_fun)(0.)
 
+    
+    numerical_partial = (En1_fun(0.005) - En1_fun(-0.005)) / 0.01
+    print(pEn1_pTheta, numerical_partial)
+
+
     return 2*(wavelength/d)*pEn1_pTheta - 2*e0 - (e1 + en1)*(1 + np.sqrt( 1 - (wavelength/d)**2 ))
 # For animated figure ##############
 plt.ion()

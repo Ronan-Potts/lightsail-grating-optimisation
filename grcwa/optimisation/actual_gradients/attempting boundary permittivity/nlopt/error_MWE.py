@@ -1,4 +1,4 @@
-import numpy as np
+import autograd.numpy as np
 from autograd import grad
 import nlopt
 
@@ -19,7 +19,7 @@ import nlopt
 
 def cost_function(x):
     cell_geometry = np.ones((10,1), dtype=float)
-    cell_geometry[5:] = x[0] # TypeError: float() argument must be a string or a number, not 'ArrayBox'
+    cell_geometry[5:] = np.array([x[0]]) # TypeError: float() argument must be a string or a number, not 'ArrayBox'
     cell_geometry[:5] = x[1] # TypeError: float() argument must be a string or a number, not 'ArrayBox'
 
     z = (x[0])**2 + (x[1])**2

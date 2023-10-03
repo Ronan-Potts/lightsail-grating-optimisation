@@ -128,7 +128,7 @@ def fun_nlopt(x_eps,gradn):
         plt.xlabel("y")
         plt.ylabel("x")
         plt.title(r"Step {}, $R_0 = {}$".format(ctrl, round(y,5)))
-        plt.savefig('ISB B/grcwa/optimisation/figs/permittivity/ilic_GRCWA_optimisation_permittivity_R0_initial')
+        plt.savefig('grcwa/optimisation/figs/permittivity_for_R0_initial')
     else:
         anim1.set_data(np.reshape(x_eps, (Nx,Ny)))
         plt.title(r"Step {}, $R_0 = {}$".format(ctrl, round(y,5)))
@@ -177,4 +177,4 @@ plt.imshow(np.reshape(x_eps, (Nx,Ny)), interpolation='nearest', vmin=0, vmax=E_S
 plt.xlabel("y")
 plt.ylabel("x")
 plt.title(r"Final result, Step {}, $R_0 = {}$".format(ctrl, round(fun(x_eps),5)))
-plt.savefig('ISB B/grcwa/optimisation/figs/permittivity/ilic_GRCWA_optimisation_permittivity_R0_final')
+plt.savefig('grcwa/optimisation/figs/permittivity_for_R0_final')

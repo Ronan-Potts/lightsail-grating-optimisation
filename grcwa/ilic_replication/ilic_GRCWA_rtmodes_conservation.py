@@ -130,8 +130,8 @@ for j in range(0,len(thetas)):
     for i in orders:
         if type(i)==int:
             # Calculate reflection and transmission at angle=theta for various orders i=0,1,-1
-            Rs = np.array([sum(Ri[ords[:,0] == i])])
-            Ts = np.array([sum(Ti[ords[:,0] == i])])
+            Rs = np.append(Rs, sum(Ri[ords[:,0] == i]))
+            Ts = np.append(Ts, sum(Ti[ords[:,0] == i]))
         else:
             # Sum of reflection and transmission in particular order
             R_plus_Ts = np.append(Rs_plus_Ts, sum(Ri) + sum(Ti))

@@ -153,7 +153,7 @@ def fun_nlopt(vars,gradn):
         plt.xlabel("y")
         plt.ylabel("x")
         plt.title(r"Step {}, $R = {}$".format(ctrl, round(y,5)))
-        plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_initial')
+        plt.savefig('grcwa/optimisation/numerical_gradients/figs/numerical_width&pos_for_R_initial')
 
     else:
         anim1.set_data(get_cell_geometry(vars))
@@ -190,7 +190,7 @@ plt.imshow(get_cell_geometry(vars), interpolation='nearest', vmin=0, vmax=E_Si, 
 plt.xlabel("y")
 plt.ylabel("x")
 plt.title(r"Final result, Step {}, $R = {}$".format(ctrl, round(fun(vars),5)))
-plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width&pos_R_final')
+plt.savefig('grcwa/optimisation/numerical_gradients/figs/numerical_width&pos_for_R_final')
 '''
 PROBLEMS:
 

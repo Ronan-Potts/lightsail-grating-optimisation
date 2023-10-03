@@ -1,4 +1,4 @@
-""" Topology optimization of reflection of a single patterned layers ."""
+""" Topology optimization of reflection of a single patterned layer."""
 """ Nlopt is needed. For some reason does not work with latest version of numpy. Works fine with numpy 1.25.0 """
 
 import grcwa
@@ -6,8 +6,8 @@ grcwa.set_backend('autograd')  # important!!
 
 import numpy as np
 import autograd.numpy as npgrad
+# from autograd import grad
 import nlopt
-from autograd import grad
 
 import matplotlib.pyplot as plt
 
@@ -17,7 +17,7 @@ Discretisation values
 # Truncation order
 nG = 30
 # Resolution 
-Nx = 100
+Nx = 10000
 Ny = 1
 
 '''
@@ -35,58 +35,28 @@ h = 0.5  # thickness of resonator layer
 t = 0.5  # also equal to thickness of substrate layer
 
 E_vacuum = 1.
-E_Si = 3.5**2     # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
+E_Si = 3.5**2    # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
 E_SiO2 = 1.45**2  # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
 
 # Lattice constants. I will consider a lattice with square-shaped unit cells of size d x d (in natural units specified above)
 L1 = [d, 0]
 L2 = [0, dy]
 
-def boundary_indices(x):
-    global E_Si
-    # Define boundary permittivities
-    eps_1d = x[:,0]
-    boundary_indices = []
-    for i in range(1,len(eps_1d)-1):
-        lower_neighbor = eps_1d[i-1]
-        current = eps_1d[i]
-        upper_neighbor = eps_1d[i+1]
-        if current == E_Si and (lower_neighbor == E_Si or upper_neighbor == E_Si) and (lower_neighbor != upper_neighbor):
-            # then we are at a boundary
-            boundary_indices.append(i)
-    return boundary_indices
 '''
 Cell geometry
-    vars: an array, vars = [eps1, eps2] which contains the permittivities at the edges of each element.
+    vars: an array, vars = [x1,w1,x2,w2]
 '''
 def get_cell_geometry(vars):
-    
     # Unit cell geometry (rows, cols)
-    cell_geometry = np.ones((Nx,Ny), dtype=float)*E_vacuum
+    x = np.ones((Nx,Ny), dtype=float)*E_vacuum
 
     x0 = np.linspace(0,d,Nx)
     y0 = np.linspace(0,dy,Ny)
     x, y = np.meshgrid(x0,y0, indexing='ij')
-
     # The design will be completely uniform in the y-direction.
-    filter = (abs(x-x1) <= vars[0]/2) | (abs(x-x2) <= vars[1]/2)
-    cell_geometry[filter] = E_Si
-
-    # What proportion of the width overhangs into a slice?
-    prop_w1 = (vars[0]/(2*Nx)) % 1
-    prop_w2 = (vars[1]/(2*Nx)) % 1
-
-    eps_w1 = 1 + 11*prop_w1
-    eps_w2 = 1 + 11*prop_w2
-
-    boundary_i = boundary_indices(cell_geometry)
-    lower_boundary = boundary_i[0:2]
-    upper_boundary = boundary_i[2:]
-    
-    cell_geometry[lower_boundary,:] = eps_w1
-    cell_geometry[upper_boundary,:] = eps_w2
-
-    return cell_geometry
+    filter = (abs(x-vars[0]) <= vars[1]/2) | (abs(x-vars[2]) <= vars[3]/2)
+    x[filter] = E_Si
+    return x
 
 '''
 Light approach
@@ -104,7 +74,7 @@ planewave={'p_amp':0,'s_amp':1,'p_phase':0,'s_phase':0}
 '''
 Cost function for optimisation.
 
-       x:   The dielectric constant on the 2D grids of size Nx*Ny
+       vars:   [x1,w1,x2,w2]
        
     Qabs:   A parameter for relaxation to better approach global optimal, at Qabs = inf, it will describe the real physics.
             It also be used to resolve the singular matrix issues by setting a large but finite Qabs, e.g. Qabs = 1e5
@@ -141,10 +111,24 @@ def cost_function(vars,Qabs):
     '''
     obj.MakeExcitationPlanewave(planewave['p_amp'],planewave['p_phase'],planewave['s_amp'],planewave['s_phase'],order = 0)    
     obj.GridLayer_geteps(cell_geometry.flatten())
+
+    
     # compute reflection and transmission by order
-    # Ri(Ti) has length obj.nG, to see which order, check obj.G; too see which kx,ky, check obj.kx obj.ky
-    R,T= obj.RT_Solve(normalize=1)
-    return R
+    # Ri(Ti) has length obj.nG, to see which order, check obj.G; to see which kx,ky, check obj.kx obj.ky
+    Ri,Ti= obj.RT_Solve(byorder=1)
+    ords = obj.G # Returns a list of tuples [ord1, ord2] where ord1 is the order in the L1 direction, while ord2 is the order in the L2 direction.
+
+    # Compute the reflectance and transmittance for a particular theta at various orders
+    R0 = sum(Ri[ords[:,0] == 0])
+    R1 = sum(Ri[ords[:,0] == 1])
+    Rn1 = sum(Ri[ords[:,0] == -1])
+    T0 = sum(Ti[ords[:,0] == 0])
+    T1 = sum(Ti[ords[:,0] == 1])
+    Tn1 = sum(Ti[ords[:,0] == -1])
+    e0 = (R0 + T0)/(sum(Ri) + sum(Ti))
+    e1 = (R1 + T1)/(sum(Ri) + sum(Ti))
+    en1 = (Rn1 + Tn1)/(sum(Ri) + sum(Ti))
+    return 2*e0 + (e1 + en1)*(1 + np.sqrt( 1 - (wavelength/d)**2 ))
 
 # For animated figure ##############
 plt.ion()
@@ -155,18 +139,25 @@ fig1, ax1 = plt.subplots()
 ctrl = 0
 Qabs = npgrad.inf
 fun = lambda vars: cost_function(vars,Qabs)
-grad_fun = grad(fun)
+# grad_fun = grad(fun)
 def fun_nlopt(vars,gradn):
     global ctrl
-    # AVM: dC/dw = 1/(e-1)  *  dC/de
-    gradn[:] = grad_fun(vars)
+    # gradn[:] = grad_fun(vars)
+    '''
+    autoGrad doesn't work well here as space is discretised. Instead I will numerically evaluate the gradient.
+    '''
+    delx1_fun = fun([vars[0]+d/Nx, vars[1],      vars[2],      vars[3]])      - fun(vars)
+    delw1_fun = fun([vars[0],      vars[1]+d/Nx, vars[2],      vars[3]])      - fun(vars)
+    delx2_fun = fun([vars[0],      vars[1],      vars[2]+d/Nx, vars[3]])      - fun(vars)
+    delw2_fun = fun([vars[0],      vars[1],      vars[2],      vars[3]+d/Nx]) - fun(vars)
+    gradn[:] = [delx1_fun, delw1_fun, delx2_fun, delw2_fun]
     y = fun(vars)
 
     # Printing parameters to command line
     if ctrl == 0:
-        print("{:<8} {:<8} {:<8} {:<8}".format("Step", "R", 'w1', 'w2'))
+        print("{:<8} {:<8} {:<8} {:<8} {:<8} {:<8}".format("Step", "Term 2", 'x1', 'w1', 'x2', 'w2'))
     else:
-        print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f}".format(ctrl, y, vars[0],vars[1]))
+        print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f}".format(ctrl, y, vars[0],vars[1],vars[2],vars[3]))
     # Visualising the geometry ____________________________________________________________________
     if ctrl == 0:
         global anim1
@@ -175,12 +166,12 @@ def fun_nlopt(vars,gradn):
         cbar.set_label("Permittivity")
         plt.xlabel("y")
         plt.ylabel("x")
-        plt.title(r"Step {}, $R = {}$".format(ctrl, round(y,5)))
-        plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width_R_initial')
+        plt.title("Step {}, Term 2 = {}".format(ctrl, round(y,5)))
+        plt.savefig('grcwa/optimisation/numerical_gradients/figs/numerical_width&pos_for_Jadon_initial')
 
     else:
         anim1.set_data(get_cell_geometry(vars))
-        plt.title(r"Step {}, $R = {}$".format(ctrl, round(y,5)))
+        plt.title("Step {}, Term 2 = {}".format(ctrl, round(y,5)))
         fig1.canvas.flush_events()
     # _____________________________________________________________________________________________
     ctrl += 1
@@ -193,10 +184,10 @@ def fun_nlopt(vars,gradn):
 NLOPT Setup
 '''
 # set up NLOPT
-ndof = 2
-init = [w1,w2]
-lb = [0,0]
-ub = [d,d]
+ndof = 4
+init = [x1,w1,x2,w2]
+lb = [0,0,0,0]
+ub = [d,d,d,d]
 
 opt = nlopt.opt(nlopt.LD_MMA, ndof)
 opt.set_lower_bounds(lb)
@@ -212,12 +203,5 @@ vars = opt.optimize(init)
 plt.imshow(get_cell_geometry(vars), interpolation='nearest', vmin=0, vmax=E_Si, aspect='auto')
 plt.xlabel("y")
 plt.ylabel("x")
-plt.title(r"Final result, Step {}, $R = {}$".format(ctrl, round(fun(vars),5)))
-plt.savefig('grcwa/optimisation/figs/width/ilic_GRCWA_optimisation_width_R_final')
-'''
-PROBLEMS:
-
- 1) gradn[:] is zero. Not sure why. Is likely due to small changes in 'vars' which cause no change in get_cell_geometry due to discretisation.
- 2) I can't decrease Nx by too much - it is limited by the size of d, where larger d requires larger Nx for indexing purposes. GRCWA seems to
-    discretise in fixed amounts at some stage (not very good). This is likely the cause of the problem (1).
-'''
+plt.title("Final result, Step {}, Term 2 = {}".format(ctrl, round(fun(vars),5)))
+plt.savefig('grcwa/optimisation/numerical_gradients/figs/numerical_width&pos_for_Jadon_final')

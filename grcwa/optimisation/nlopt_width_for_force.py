@@ -17,7 +17,7 @@ Discretisation values
 # Truncation order
 nG = 30
 # Resolution 
-Nx = 101
+Nx = 161
 Ny = 1
 
 '''
@@ -66,17 +66,18 @@ def w_filled(Nx,Ny,d,dy,x1,x2,w1,w2):
     y0 = np.linspace(0,dy,Ny)
     x, y = np.meshgrid(x0,y0, indexing='ij')
 
+    half_bin_width = d/(2*(Nx-1))
     # Need to add factor d/2*(Nx-1) as the x-positions in the meshgrid are the centers of bins, not actual bins. The bins have width d/(Nx-1)
-    filter = (abs(x - x1) + (d/(2*(Nx-1))) <= w1/2) | (abs(x-x2) + (d/(2*(Nx-1))) <= w2/2)
+    filter = (abs(x - x1) + half_bin_width <= w1/2) | (abs(x-x2) + half_bin_width <= w2/2)
     cell_geometry = np.ones((Nx,Ny))*E_vacuum
     cell_geometry[filter] = E_Si
     # How many cells are filled?
-    w_filled_e1 = sum(ones[abs(x-x1) + (d/(2*(Nx-1))) <= w1/2]*d/(Nx-1))
-    w_filled_e2 = sum(ones[abs(x-x2) + (d/(2*(Nx-1))) <= w2/2]*d/(Nx-1))
+    w_filled_e1 = sum(ones[abs(x-x1) + half_bin_width <= w1/2]*d/(Nx-1))
+    w_filled_e2 = sum(ones[abs(x-x2) + half_bin_width <= w2/2]*d/(Nx-1))
 
     # Calculate boundary permittivities using width proportion unaccounted for
-    eps1 = (E_Si - E_SiO2)*(w1-w_filled_e1)/(2*d/(Nx-1))
-    eps2 = (E_Si - E_SiO2)*(w2-w_filled_e2)/(2*d/(Nx-1))
+    eps1 = (E_Si - E_vacuum)*(w1-w_filled_e1)/(2*d/(Nx-1)) + E_vacuum
+    eps2 = (E_Si - E_vacuum)*(w2-w_filled_e2)/(2*d/(Nx-1)) + E_vacuum
 
     # Find boundary indices
     cell_geom_1d = cell_geometry[:,0]
@@ -215,7 +216,7 @@ def cost_function(vars,Qabs):
     print(pEn1_pTheta, numerical_partial)
 
 
-    return 2*(wavelength/d)*pEn1_pTheta - 2*e0 - (e1 + en1)*(1 + np.sqrt( 1 - (wavelength/d)**2 ))
+    return 2*(wavelength/d)*(-1)*pEn1_pTheta - 2*e0 - (e1 + en1)*(1 + np.sqrt( 1 - (wavelength/d)**2 ))
 # For animated figure ##############
 plt.ion()
 fig1, ax1 = plt.subplots()

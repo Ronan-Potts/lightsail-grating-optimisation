@@ -29,7 +29,7 @@ Ny = 1
 Optimisation parameters
 '''
 max_iterations = 1000
-step_size = 40
+step_size = 4
 precision = 10
 decimal_precision = 3
 num_identical=20
@@ -42,7 +42,7 @@ d = 1.8  # unit cell width
 dy = 1e-1
 x1 = 0.25*d # positions of blocks in unit cell
 x2 = 0.85*d 
-w1 = 0.35*d # width of blocks in unit cell, 0.45d works for good optimum
+w1 = 0.35*d # width of blocks in unit cell
 w2 = 0.15*d
 
 h = 0.5  # thickness of resonator layer
@@ -103,10 +103,10 @@ def get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2):
     y0 = np.linspace(0,dy,Ny)
     x, y = np.meshgrid(x0,y0, indexing='ij')
 
-    filter1 = abs(x - x1) <= w1/2
-    filter2 = abs(x-x2) <= w2/2
-    cell_geometry = np.ones((Nx,Ny)) * E_vacuum
-    cell_geometry[filter1 | filter2] = E_Si
+    # Need to add factor d/2*(Nx-1) as the x-positions in the meshgrid are the centers of bins, not actual bins. The bins have width d/(Nx-1)
+    filter = (abs(x - x1) + (d/(2*(Nx-1))) <= w1/2) | (abs(x-x2) + (d/(2*(Nx-1))) <= w2/2)
+    cell_geometry = np.ones((Nx,Ny))*E_vacuum
+    cell_geometry[filter] = E_Si
 
     # Finding boundaries
     boundary_i = boundary_indices(cell_geometry)
@@ -243,7 +243,7 @@ while index <= max_iterations:
         plt.xlabel("y")
         plt.ylabel("x")
         plt.title(r"Step {}, $R = {:.5f}$".format(index, round(cost_val,decimal_precision)))
-        plt.savefig('grcwa/optimisation/figs/boundary_permittivity_for_R_initial')
+        plt.savefig('grcwa/optimisation/non_nlopt/figs/boundary_permittivity_for_R_final')
     else:
         print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f}".format(index, cost_val, vars[0],vars[1]))
 
@@ -284,7 +284,8 @@ while index <= max_iterations:
     cost_val = fun_grad(vars)
 
     if old_cost >= cost_val:
-        step_size = 0.9*step_size
+        print("Optimum reached after {} steps. Terminating the loop...".format(index))
+        break
 
     
     index += 1
@@ -296,4 +297,4 @@ plt.imshow(get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2), interpolation='nearest', vm
 plt.xlabel("y")
 plt.ylabel("x")
 plt.title(r"Final result, Step {}, $R = {:.5f}$".format(index, round(cost_fun(vars),decimal_precision)))
-plt.savefig('grcwa/optimisation/figs/boundary_permittivity_for_R_final')
+plt.savefig('grcwa/optimisation/non_nlopt/figs/boundary_permittivity_for_R_final')

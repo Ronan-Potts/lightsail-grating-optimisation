@@ -29,7 +29,7 @@ Ny = 1
 Optimisation parameters
 '''
 max_iterations = 1000
-step_size = 4
+step_size = 40
 precision = 10
 decimal_precision = 3
 num_identical=20
@@ -42,7 +42,7 @@ d = 1.8  # unit cell width
 dy = 1e-1
 x1 = 0.25*d # positions of blocks in unit cell
 x2 = 0.85*d 
-w1 = 0.35*d # width of blocks in unit cell
+w1 = 0.35*d # width of blocks in unit cell, 0.45d works for good optimum
 w2 = 0.15*d
 
 h = 0.5  # thickness of resonator layer
@@ -103,10 +103,10 @@ def get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2):
     y0 = np.linspace(0,dy,Ny)
     x, y = np.meshgrid(x0,y0, indexing='ij')
 
-    # Need to add factor d/2*(Nx-1) as the x-positions in the meshgrid are the centers of bins, not actual bins. The bins have width d/(Nx-1)
-    filter = (abs(x - x1) + (d/(2*(Nx-1))) <= w1/2) | (abs(x-x2) + (d/(2*(Nx-1))) <= w2/2)
-    cell_geometry = np.ones((Nx,Ny))*E_vacuum
-    cell_geometry[filter] = E_Si
+    filter1 = abs(x - x1) <= w1/2
+    filter2 = abs(x-x2) <= w2/2
+    cell_geometry = np.ones((Nx,Ny)) * E_vacuum
+    cell_geometry[filter1 | filter2] = E_Si
 
     # Finding boundaries
     boundary_i = boundary_indices(cell_geometry)
@@ -114,7 +114,6 @@ def get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2):
     upper_boundary = boundary_i[2:]
 
     # Change boundary permittivities
-    print(lower_boundary, upper_boundary)
     cell_geometry = cell_geometry.tolist()
     cell_geometry[lower_boundary[0]][0] = eps1
     cell_geometry[lower_boundary[1]][0] = eps1
@@ -285,8 +284,7 @@ while index <= max_iterations:
     cost_val = fun_grad(vars)
 
     if old_cost >= cost_val:
-        print("Optimum reached after {} steps. Terminating the loop...".format(index))
-        break
+        step_size = 0.9*step_size
 
     
     index += 1

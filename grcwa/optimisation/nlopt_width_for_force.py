@@ -51,6 +51,9 @@ freq = 1./wavelength
 theta = 0.
 phi = 0.
 
+# Speed of light
+c = 1
+
 # planewave excitation
 planewave={'p_amp':0,'s_amp':1,'p_phase':0,'s_phase':0}
 
@@ -158,7 +161,7 @@ def En1_func(theta, cell_geometry):
     return Rn1
     
 
-def cost_function(vars,Qabs):
+def cost_function(vars,Qabs,v):
     # Cell geometry
     cell_geometry = get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2)
     '''
@@ -212,10 +215,14 @@ def cost_function(vars,Qabs):
 
     
     numerical_partial = (En1_fun(0.005) - En1_fun(-0.005)) / 0.01
-    print(pEn1_pTheta, numerical_partial)
 
+    # Relativistic terms
+    c = 1
+    beta = v/c
+    gamma = 1/np.sqrt(1-beta**2)
+    D1 = beta*gamma + gamma - 1
 
-    return 2*(wavelength/d)*pEn1_pTheta - 2*e0 - (e1 + en1)*(1 + np.sqrt( 1 - (wavelength/d)**2 ))
+    return -(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e0 + (e1 + en1)*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
 # For animated figure ##############
 plt.ion()
 fig1, ax1 = plt.subplots()
@@ -224,7 +231,8 @@ fig1, ax1 = plt.subplots()
 # nlopt function
 ctrl = 0
 Qabs = np.inf
-fun = lambda vars: cost_function(vars,Qabs)
+v = 0.2*c
+fun = lambda vars: cost_function(vars,Qabs, v)
 grad_fun = grad(fun)
 
 def fun_nlopt(vars,gradn):
@@ -245,13 +253,13 @@ def fun_nlopt(vars,gradn):
         cbar.set_label("Permittivity")
         plt.xlabel("y")
         plt.ylabel("x")
-        plt.title(r"Step {}, Force Component = {} $(\gamma - 1)D_1^2 I A' v_y / cv$".format(ctrl, round(-1*y,5)))
+        plt.title(r"Step {}, Force Component = {} $I A' v_y / c$".format(ctrl, round(y,5)))
         plt.savefig('grcwa/optimisation/figs/nlopt_width_for_force_initial')
     else:
         print("{:<8} {:<20.3f} {:<8.3f} {:<8.3f}".format(ctrl, y, vars[0],vars[1]))
 
         anim1.set_data(get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2))
-        plt.title(r"Step {}, Force Component = {} $(\gamma - 1)D_1^2 I A' v_y / cv$".format(ctrl, round(-1*y,5)))
+        plt.title(r"Step {}, Force Component = {} $I A' v_y / c$".format(ctrl, round(y,5)))
         fig1.canvas.flush_events()
     # _____________________________________________________________________________________________
     ctrl += 1
@@ -276,12 +284,12 @@ opt.set_upper_bounds(ub)
 opt.set_xtol_rel(1e-5)
 opt.set_maxeval(100)
 
-opt.set_max_objective(fun_nlopt)
+opt.set_min_objective(fun_nlopt)
 vars = opt.optimize(init)
 
 
 plt.imshow(get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2), interpolation='nearest', vmin=E_vacuum, vmax=E_Si, aspect='auto')
 plt.xlabel("y")
 plt.ylabel("x")
-plt.title(r"Final result, Step {}, Force Component = {} $(\gamma - 1)D_1^2 I A' v_y / cv$".format(ctrl, round(-1*fun(vars),5)))
+plt.title(r"Final result, Step {}, Force Component = {} $I A' v_y / c$".format(ctrl, round(fun(vars),5)))
 plt.savefig('grcwa/optimisation/figs/nlopt_width_for_force_final')

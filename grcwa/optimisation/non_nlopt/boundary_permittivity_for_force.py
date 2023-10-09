@@ -304,6 +304,22 @@ while index <= max_iterations:
     cell_geometry = get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2)
     cost_val = fun_grad(vars)
     outputs.append(cost_val)
+    
+
+    # What if algorithm starts moving backwards? Then reset
+    if index != 0 and old_cost > cost_val:
+        step_size = 0.9*step_size
+        redo_count = 0
+        while old_cost > cost_val:
+            vars = vars + step_size*np.array(grad)
+            cost_val = fun_grad(vars)
+            redo_count += 1
+            if redo_count > 20:
+                print("Optimum reached after {} steps. Terminating the loop...".format(index))
+                cost_val = old_cost
+                break
+        if redo_count > 20:
+            break
 
     # Printing parameters to command line
     if index == 0:
@@ -353,15 +369,10 @@ while index <= max_iterations:
         vars[1] = E_vacuum
         w2 = w2 + 2*d/(Nx-1)
 
-
-    old_cost = cost_val
-    cost_val = fun_grad(vars)
-
-    if old_cost >= cost_val:
-        step_size = 0.9*step_size
-
     
     index += 1
+    old_cost = cost_val
+    old_vars = vars
 
 if index == max_iterations + 1:
     print("Solution could not converge after {} steps".format(index-1))
@@ -369,5 +380,5 @@ if index == max_iterations + 1:
 plt.imshow(get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2), interpolation='nearest', vmin=0, vmax=E_Si, aspect='auto')
 plt.xlabel("y")
 plt.ylabel("x")
-plt.title(r"Final result, Step {}, $R = {:.5f}$".format(index, round(cost_fun(vars),decimal_precision)))
+plt.title(r"Final result, Step {}, $R = {:.5f}$".format(index, round(-1*cost_val,decimal_precision)))
 plt.savefig('grcwa/optimisation/non_nlopt/figs/boundary_permittivity_for_force_final')

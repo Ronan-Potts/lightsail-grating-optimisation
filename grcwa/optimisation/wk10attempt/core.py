@@ -461,5 +461,4 @@ def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta):
     D1 = np.sqrt((1-beta)/(1+beta))
 
     ## Transverse force
-    print(2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + (e[1] + e[-1])*(1 + np.sqrt( 1 - (wavelength/d)**2 ))))
-    return -(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + (e[1] + e[-1])*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
+    return -(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + 2*e[1]*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )

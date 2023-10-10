@@ -83,7 +83,7 @@ def boundary_indices(x):
         lower_neighbor = eps_1d[i-1]
         current = eps_1d[i]
         upper_neighbor = eps_1d[i+1]
-        if current != E_vacuum and (lower_neighbor == E_Si or upper_neighbor == E_Si) and (lower_neighbor != upper_neighbor):
+        if current == E_Si and (lower_neighbor == E_Si or upper_neighbor == E_Si) and (lower_neighbor != upper_neighbor):
             # then we are at a boundary
             boundary_indices.append(i)
     return boundary_indices
@@ -210,8 +210,8 @@ def w_filled(Nx,Ny,d,dy,x1,x2,w1,w2):
 
 w_filled_e1, w_filled_e2 = w_filled(Nx,Ny,d,dy,x1,x2,w1,w2)
 
-eps1 = (E_Si - E_SiO2)*(w1-w_filled_e1)/(2*d/(Nx-1))
-eps2 = (E_Si - E_SiO2)*(w2-w_filled_e2)/(2*d/(Nx-1))
+eps1 = (E_Si - E_vacuum)*(w1-w_filled_e1)/(2*d/(Nx-1)) + E_vacuum
+eps2 = (E_Si - E_vacuum)*(w2-w_filled_e2)/(2*d/(Nx-1)) + E_vacuum
 
 # Initialise
 vars = [eps1, eps2]
@@ -264,19 +264,19 @@ while index <= max_iterations:
     eps1 = vars[0]
     eps2 = vars[1]
     if eps1 < E_vacuum:
-        vars[0] = E_Si
+        vars[0] = E_Si - .1
         w1 = w1 - 2*d/(Nx-1)
 
     if eps2 < E_vacuum:
-        vars[1] = E_Si
+        vars[1] = E_Si - .1
         w2 = w2 - 2*d/(Nx-1)
 
     if eps1 > E_Si:
-        vars[0] = E_vacuum
+        vars[0] = E_vacuum + .1
         w1 = w1 + 2*d/(Nx-1)
 
     if eps2 > E_Si:
-        vars[1] = E_vacuum
+        vars[1] = E_vacuum + .1
         w2 = w2 + 2*d/(Nx-1)
 
 

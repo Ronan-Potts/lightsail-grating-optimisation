@@ -103,10 +103,10 @@ for j in range(0,len(thetas)):
     theta = thetas[j]
     obj = grcwa.obj(nG,L1,L2,freq,theta,phi=0,verbose=0)
     # input layer information
-    obj.Add_LayerUniform(0,E_vacuum)     # Layer 0
+    obj.Add_LayerUniform(2,E_vacuum)     # Layer 0
     obj.Add_LayerGrid(h,Nx,Ny)           # Layer 1
     obj.Add_LayerUniform(t,E_SiO2)       # Layer 2
-    obj.Add_LayerUniform(0,E_vacuum)     # Layer 3
+    obj.Add_LayerUniform(2,E_vacuum)     # Layer 3
     obj.Init_Setup()
 
     # planewave excitation
@@ -153,7 +153,7 @@ plt.ylabel("Reflection/transmission")
 plt.title("Reflection and transmission coefficients for asymmetric Ilic-style grating")
 plt.ylim([0,1.])
 
-plt.savefig('ISB B/grcwa/ilic_replication/figs/ilic_GRCWA_rtmodes_nG{}'.format(nG))
+plt.savefig('grcwa/ilic_replication/figs/ilic_GRCWA_rtmodes_nG{}'.format(nG))
 plt.show()
 
 

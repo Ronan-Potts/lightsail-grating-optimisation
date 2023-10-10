@@ -47,6 +47,7 @@ w2 = 0.15*d
 
 h = 0.5  # thickness of resonator layer
 t = 0.5  # also equal to thickness of substrate layer
+v_width = 2
 
 E_vacuum = 1.
 E_Si = 3.5**2    # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
@@ -158,10 +159,10 @@ def En1_func(theta, cell_geometry):
     ######### setting up RCWA
     obj = grcwa.obj(nG,L1,L2,freqcmp,theta*np.pi/180,phi*np.pi/180,verbose=0)
     # input layer information
-    obj.Add_LayerUniform(0,E_vacuum)     # Layer 0
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 0
     obj.Add_LayerGrid(h,Nx,Ny)           # Layer 1
     obj.Add_LayerUniform(t,E_SiO2)       # Layer 2
-    obj.Add_LayerUniform(0,E_vacuum)     # Layer 3
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 3
     obj.Init_Setup()
 
 
@@ -183,7 +184,7 @@ def En1_func(theta, cell_geometry):
     return en1
     
 
-def cost_function(vars,Qabs,v):
+def cost_function(vars,Qabs,beta):
     # Cell geometry
     cell_geometry = get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2)
     '''
@@ -237,21 +238,21 @@ def cost_function(vars,Qabs,v):
     
 
     
-    pEn1_pTheta = (En1_fun(0.005) - En1_fun(-0.005)) / 0.01
+    pEn1_pTheta = (En1_fun(0.0005) - En1_fun(-0.0005)) / 0.001
 
     # Relativistic terms
     c = 1
-    beta = v/c
+    v = beta*c
     gamma = 1/np.sqrt(1-beta**2)
-    D1 = beta*gamma + gamma - 1
+    D1 = np.sqrt((1-beta)/(1+beta))
 
-    return (1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e0 + (e1 + en1)*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
+    return -(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e0 + (e1 + en1)*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
 
 
 Qabs = np.inf
-v = 0.2*c
+beta = 0.02
 
-cost_fun = lambda vars: cost_function(vars,Qabs,v)
+cost_fun = lambda vars: cost_function(vars,Qabs,beta)
 grad_fun = grad(cost_fun)
 
 def fun_grad(vars):
@@ -323,8 +324,8 @@ while index <= max_iterations:
 
     # Printing parameters to command line
     if index == 0:
-        print("{:<8} {:<8} {:<8} {:<8}".format("Step", "R", 'eps1', 'eps2'))
-        print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f}".format(index, -1*cost_val, vars[0],vars[1]))
+        print("{:<8} {:<8} {:<8} {:<8} {:<8} {:<8}".format("Step", "R", 'eps1', 'eps2', 'w1', 'w2'))
+        print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f}".format(index, -1*cost_val, vars[0],vars[1],w1,w2))
         
         global anim1
         anim1 = ax1.imshow(cell_geometry, interpolation='nearest', vmin=0, vmax=E_Si, aspect='auto')
@@ -332,13 +333,13 @@ while index <= max_iterations:
         cbar.set_label("Permittivity")
         plt.xlabel("y")
         plt.ylabel("x")
-        plt.title(r"Step {}, $R = {:.5f}$".format(index, round(-1*cost_val,decimal_precision)))
+        plt.title(r"Step {}, Force Component = {} $I A' v_y / c$, $\beta$ = {}".format(index, round(-1*cost_val,decimal_precision),beta))
         plt.savefig('grcwa/optimisation/non_nlopt/figs/boundary_permittivity_for_force_initial')
     else:
-        print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f}".format(index, -1*cost_val, vars[0],vars[1]))
+        print("{:<8} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f} {:<8.3f}".format(index, -1*cost_val, vars[0],vars[1],w1,w2))
 
         anim1.set_data(cell_geometry)
-        plt.title(r"Step {}, $R = {:.5f}$".format(index, round(-1*cost_val,decimal_precision)))
+        plt.title(r"Step {}, Force Component = {} $I A' v_y / c$, $\beta$ = {}".format(index, round(-1*cost_val,decimal_precision),beta))
         fig1.canvas.flush_events()
 
 
@@ -380,5 +381,5 @@ if index == max_iterations + 1:
 plt.imshow(get_cell_geometry(vars,Nx,Ny,d,dy,x1,x2), interpolation='nearest', vmin=0, vmax=E_Si, aspect='auto')
 plt.xlabel("y")
 plt.ylabel("x")
-plt.title(r"Final result, Step {}, $R = {:.5f}$".format(index, round(-1*cost_val,decimal_precision)))
+plt.title(r"Final result, Step {}, Force Component = {} $I A' v_y / c$, $\beta$ = {}".format(index, round(-1*cost_val,decimal_precision),beta))
 plt.savefig('grcwa/optimisation/non_nlopt/figs/boundary_permittivity_for_force_final')

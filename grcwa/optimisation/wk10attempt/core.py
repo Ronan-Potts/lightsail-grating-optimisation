@@ -102,7 +102,9 @@ def linear_boundary_geometry(Nx,d,x1,x2,w1,w2):
     return cell_geometry, eps1, eps2
 
 
-def linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,eps1,eps2):
+def linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,vars):
+    eps1 = vars[0]
+    eps2 = vars[1]
     '''
     This function defines a 2D two-element unit cell with the widths and positions of the elements given, but the boundary
     permittivity of the unit cell specified externally.
@@ -124,22 +126,9 @@ def linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,eps1,eps2):
         eps2: the permittivity at the boundary of element 2
     '''
 
-    if w1/(2*d/(Nx-1)) - int(w1/(2*d/(Nx-1))) > 0:
-        raise Exception("w1 must be an even integer multiple of the slice width d/(Nx-1).")
-        # ... otherwise I would need to make the code needlessly complicated.
-    if w2/(2*d/(Nx-1)) - int(w2/(2*d/(Nx-1))) > 0:
-        raise Exception("w2 must be an even integer multiple of the slice width d/(Nx-1).")
-        # ... otherwise I would need to make the code needlessly complicated.
     if x1 > x2:
         raise Exception("x1 should be less than x2, otherwise eps1 will correspond to element 2.")
 
-
-    ### Finding actual_w1 and actual_w2
-    prop_w1 = 1 - (eps1 - E_vacuum)/(E_Si - E_vacuum)
-    prop_w2 = 1 - (eps2 - E_vacuum)/(E_Si - E_vacuum)
-    
-    actual_w1 = w1 - (2*d/(Nx-1))*prop_w1
-    actual_w2 = w2 - (2*d/(Nx-1))*prop_w2
     
     ### Generating basic unit cell
     # Defining coordinate system
@@ -178,9 +167,7 @@ def linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,eps1,eps2):
     
 
     # cell_geometry is a 1D array whose values correspond to the permittivity of each spatial slice in the unit cell.
-    # actual_w1 and actual_w2 are the proper values of w1 and w2 by using a linear model which equates a partially filled
-    # slice in the unit cell with a permittivity in the range [E_vacuum,E_Si].
-    return cell_geometry, actual_w1, actual_w2
+    return cell_geometry
     
     
 def grcwa_reflectance_transmittance(nG,cell_geometry,Nx,d,theta,freq):
@@ -461,4 +448,4 @@ def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta):
     D1 = np.sqrt((1-beta)/(1+beta))
 
     ## Transverse force
-    return -(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + 2*e[1]*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
+    return -1*(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + 2*e[1]*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )

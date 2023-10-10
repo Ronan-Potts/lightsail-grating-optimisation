@@ -217,7 +217,7 @@ def cost_function(vars,Qabs,v):
     c = 1
     beta = v/c
     gamma = 1/np.sqrt(1-beta**2)
-    D1 = beta*gamma + gamma - 1
+    D1 = np.sqrt((1-beta)/(1+beta))
 
     return -(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e0 + (e1 + en1)*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
 

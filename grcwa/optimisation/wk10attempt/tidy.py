@@ -1,4 +1,5 @@
 import core
+
 # Truncation order
 nG = 30
 # Resolution 
@@ -31,7 +32,7 @@ w2 = 0.15*d
 
 
 ### Define cell geometry using permittivity at boundaries
-cell_geometry, actual_w1, actual_w2 = core.linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,5,5)
+cell_geometry = core.linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,[5,5])
 
 
 ### Reflectance and transmittance
@@ -53,5 +54,9 @@ print("Efficiencies:", efficiencies)
 
 
 ### Transverse force
-force = core.grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta=0.2)
+Nx = 41
+nG = 30
+beta = 0.02
+cell_geometry = core.linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,[8.932,8.154])
+force = core.grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta)
 print("Transverse force: {} I A' v_y/c".format(force))

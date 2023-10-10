@@ -29,7 +29,6 @@ v_width = 2    # thickness of vacuum layers
 
 ## Sail speed
 c = 1.
-v = 0.2*c
 def linear_boundary_geometry(Nx,d,x1,x2,w1,w2):
     '''
     This function defines a 2D two-element unit cell with the widths and positions of the elements given.
@@ -321,7 +320,8 @@ def grcwa_efficiencies(nG,orders,cell_geometry,Nx,d,theta,freq):
     ## Unit cell dimension
     L1 = [d,0]
 
-    # It is necessary to ensure that cell_geometry is not an ArrayBox, which does happen whenever grad_fun is called.
+    # It is necessary to ensure that cell_geometry is not an ArrayBox, since it is not intended that gradients of
+    # this function are computed with respect to cell_geometry.
     if type(cell_geometry) == np.numpy_boxes.ArrayBox:
         cell_geometry = cell_geometry._value
 
@@ -373,7 +373,7 @@ def grcwa_efficiencies(nG,orders,cell_geometry,Nx,d,theta,freq):
 
     
 
-def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq):
+def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta):
     '''
     Calculates the reflectance of the infinitely extended unit cell.
 
@@ -386,6 +386,8 @@ def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq):
         d: width of the unit cell.
 
         theta: incident angle of light.
+
+        beta: the speed of the sail, as a multiple of the speed of light.
 
     '''
     ## Frequency
@@ -451,11 +453,13 @@ def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq):
     wavelength = c/freq
 
     ## Relativistic terms
-    beta = v/c
+    v = beta*c
     gamma = 1/np.sqrt(1-beta**2)
-    D1 = beta*gamma + gamma - 1
+    '''
+    Not sure if this definition of D1 is entirely correct
+    '''
+    D1 = np.sqrt((1-beta)/(1+beta))
 
     ## Transverse force
+    print(2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + (e[1] + e[-1])*(1 + np.sqrt( 1 - (wavelength/d)**2 ))))
     return -(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + (e[1] + e[-1])*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
-    
-

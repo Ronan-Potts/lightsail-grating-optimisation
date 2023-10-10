@@ -53,4 +53,5 @@ print("Efficiencies:", efficiencies)
 
 
 ### Transverse force
-force = core.grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq)
+force = core.grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta=0.2)
+print("Transverse force: {} I A' v_y/c".format(force))

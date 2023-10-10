@@ -36,11 +36,21 @@ cell_geometry, actual_w1, actual_w2 = core.linear_permittivity_geometry(Nx,d,x1,
 
 ### Reflectance and transmittance
 R,T = core.grcwa_reflectance_transmittance(nG,cell_geometry,Nx,d,theta,freq)
-print(R,T)
+print("Reflectance: {}, Transmittance: {}".format(R,T))
 
 
 ### Reflectance and transmittance by orders: -1, 0, 1
 orders = [-1,0,1]
 Rs,Ts = core.grcwa_reflectance_transmittance_orders(nG,orders,cell_geometry,Nx,d,theta,freq)
-print(Rs,Ts)
+print("Reflectance at orders [-1,0,1]:", Rs)
+print("Transmittance at orders [-1,0,1]:", Ts)
 
+
+### Efficiencies
+orders = [-1,0,1]
+efficiencies = core.grcwa_efficiencies(nG,orders,cell_geometry,Nx,d,theta,freq)
+print("Efficiencies:", efficiencies)
+
+
+### Transverse force
+force = core.grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq)

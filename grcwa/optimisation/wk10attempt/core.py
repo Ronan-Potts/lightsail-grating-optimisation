@@ -15,6 +15,21 @@ E_SiO2 = 1.45**2  # https://refractiveindex.info/ with k = n^2 (dielectric const
 Ny = 1
 dy = 1e-4
 
+# planewave excitation
+planewave = {'p_amp':0,'s_amp':1,'p_phase':0,'s_phase':0}
+phi = 0.
+
+## Unit cell dimension
+L2 = [0,dy]
+
+## Thickness parameters
+h = 0.5  # thickness of resonator layer
+t = 0.5  # also equal to thickness of substrate layer
+v_width = 2    # thickness of vacuum layers
+
+## Sail speed
+c = 1.
+v = 0.2*c
 def linear_boundary_geometry(Nx,d,x1,x2,w1,w2):
     '''
     This function defines a 2D two-element unit cell with the widths and positions of the elements given.
@@ -184,23 +199,12 @@ def grcwa_reflectance_transmittance(nG,cell_geometry,Nx,d,theta,freq):
         theta: incident angle of light.
 
     '''
-    
-    # planewave excitation
-    planewave = {'p_amp':0,'s_amp':1,'p_phase':0,'s_phase':0}
-    phi = 0.
-
     ## Frequency
     Qabs = np.inf
     freqcmp = freq*(1+1j/2/Qabs)
 
-    ## Unit cell dimensions
+    ## Unit cell dimension
     L1 = [d,0]
-    L2 = [0,dy]
-
-    ## Thickness parameters
-    h = 0.5  # thickness of resonator layer
-    t = 0.5  # also equal to thickness of substrate layer
-    v = 2    # thickness of vacuum ater
 
     ## setting up RCWA
     obj = grcwa.obj(nG,L1,L2,freqcmp,theta*np.pi/180,phi*np.pi/180,verbose=0)
@@ -218,10 +222,10 @@ def grcwa_reflectance_transmittance(nG,cell_geometry,Nx,d,theta,freq):
                                     _________
     '''
     # input layer information
-    obj.Add_LayerUniform(v,E_vacuum)     # Layer 0
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 0
     obj.Add_LayerGrid(h,Nx,Ny)           # Layer 1
     obj.Add_LayerUniform(t,E_SiO2)       # Layer 2
-    obj.Add_LayerUniform(v,E_vacuum)     # Layer 3
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 3
     obj.Init_Setup()
 
     ## Input plane wave and grid information
@@ -247,23 +251,12 @@ def grcwa_reflectance_transmittance_orders(nG,orders,cell_geometry,Nx,d,theta,fr
         theta: incident angle of light.
 
     '''
-    
-    # planewave excitation
-    planewave = {'p_amp':0,'s_amp':1,'p_phase':0,'s_phase':0}
-    phi = 0.
-
     ## Frequency
     Qabs = np.inf
     freqcmp = freq*(1+1j/2/Qabs)
 
-    ## Unit cell dimensions
+    ## Unit cell dimension
     L1 = [d,0]
-    L2 = [0,dy]
-
-    ## Thickness parameters
-    h = 0.5  # thickness of resonator layer
-    t = 0.5  # also equal to thickness of substrate layer
-    v = 2    # thickness of vacuum ater
 
     ## setting up RCWA
     obj = grcwa.obj(nG,L1,L2,freqcmp,theta*np.pi/180,phi*np.pi/180,verbose=0)
@@ -281,10 +274,10 @@ def grcwa_reflectance_transmittance_orders(nG,orders,cell_geometry,Nx,d,theta,fr
                                     _________
     '''
     # input layer information
-    obj.Add_LayerUniform(v,E_vacuum)     # Layer 0
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 0
     obj.Add_LayerGrid(h,Nx,Ny)           # Layer 1
     obj.Add_LayerUniform(t,E_SiO2)       # Layer 2
-    obj.Add_LayerUniform(v,E_vacuum)     # Layer 3
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 3
     obj.Init_Setup()
 
     ## Input plane wave and grid information
@@ -321,5 +314,148 @@ def grcwa_efficiencies(nG,orders,cell_geometry,Nx,d,theta,freq):
 
         theta: incident angle of light.
     '''
+    ## Frequency
+    Qabs = np.inf
+    freqcmp = freq*(1+1j/2/Qabs)
+
+    ## Unit cell dimension
+    L1 = [d,0]
+
+    # It is necessary to ensure that cell_geometry is not an ArrayBox, which does happen whenever grad_fun is called.
+    if type(cell_geometry) == np.numpy_boxes.ArrayBox:
+        cell_geometry = cell_geometry._value
+
+    ## setting up RCWA
+    obj = grcwa.obj(nG,L1,L2,freqcmp,theta*np.pi/180,phi*np.pi/180,verbose=0)
+
+    '''
+    Building layers
+                                    _________
+                                     Layer 0 (vacuum)
+       _____     ____               _________
+      |     |   |    |               Layer 1 (pattern)
+    __|     |___|    |__            _________
+    |                    |   ...     Layer 2 (surface)
+    |____________________|          _________
+                                     Layer 3 (vacuum)
+                                    _________
+    '''
+    # input layer information
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 0
+    obj.Add_LayerGrid(h,Nx,Ny)           # Layer 1
+    obj.Add_LayerUniform(t,E_SiO2)       # Layer 2
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 3
+    obj.Init_Setup()
+
+
+    '''
+    Solving Maxwell's equations
+    '''
+    obj.MakeExcitationPlanewave(planewave['p_amp'],planewave['p_phase'],planewave['s_amp'],planewave['s_phase'],order = 0)    
+    obj.GridLayer_geteps(cell_geometry.flatten())
+
+    # compute reflection and transmission by order
+    # Ri(Ti) has length obj.nG, to see which order, check obj.G; to see which kx,ky, check obj.kx obj.ky
+    Ri,Ti= obj.RT_Solve(byorder=1)
+    ords = obj.G # Returns a list of tuples [ord1, ord2] where ord1 is the order in the L1 direction, while ord2 is the order in the L2 direction.
+    # Compute the reflectance and transmittance for a particular theta at various orders
+    Rs = np.array([])
+    Ts = np.array([])
+    for i in orders:
+        # Calculate reflection and transmission at angle=theta for various orders i=0,1,-1
+        Rs = np.append(Rs, sum(Ri[ords[:,0] == i]))
+        Ts = np.append(Ts, sum(Ti[ords[:,0] == i]))
+        
+    # Compute the reflectance and transmittance at various orders
+    efficiencies = [(Rs[i] + Ts[i])/(sum(Rs) + sum(Ts)) for i in range(0,len(orders))]
+    return efficiencies
+
+
+    
+
+def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq):
+    '''
+    Calculates the reflectance of the infinitely extended unit cell.
+
+        nG: truncation order for spatial discretisation. Affects grating diffraction orders.
+
+        cell_geometry: the geometry of the unit cell, described as either a 1D or 2D array of permittivities.
+
+        Nx: the number of slices used to spatially discretise the unit cell.
+
+        d: width of the unit cell.
+
+        theta: incident angle of light.
+
+    '''
+    ## Frequency
+    Qabs = np.inf
+    freqcmp = freq*(1+1j/2/Qabs)
+
+    ## Unit cell dimension
+    L1 = [d,0]
+
+    ## setting up RCWA
+    obj = grcwa.obj(nG,L1,L2,freqcmp,theta*np.pi/180,phi*np.pi/180,verbose=0)
+
+    '''
+    Building layers
+                                    _________
+                                     Layer 0 (vacuum)
+       _____     ____               _________
+      |     |   |    |               Layer 1 (pattern)
+    __|     |___|    |__            _________
+    |                    |   ...     Layer 2 (surface)
+    |____________________|          _________
+                                     Layer 3 (vacuum)
+                                    _________
+    '''
+    # input layer information
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 0
+    obj.Add_LayerGrid(h,Nx,Ny)           # Layer 1
+    obj.Add_LayerUniform(t,E_SiO2)       # Layer 2
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 3
+    obj.Init_Setup()
+
+    ## Input plane wave and grid information
+    obj.MakeExcitationPlanewave(planewave['p_amp'],planewave['p_phase'],planewave['s_amp'],planewave['s_phase'],order = 0)    
+    obj.GridLayer_geteps(cell_geometry.flatten())
+
+    ## Compute reflectance and transmittance by order
+    # Ri(Ti) has length obj.nG, to see which order, check obj.G; too see which kx,ky, check obj.kx obj.ky
+    Ri,Ti= obj.RT_Solve(byorder=1)
+    ords = obj.G # Returns a list of tuples [ord1, ord2] where ord1 is the order in the L1 direction, while ord2 is the order in the L2 direction.
+    
+    ## Reflectance, transmittance, and efficiencies in orders -1,0,1
+    Rs = np.array([])
+    Ts = np.array([])
+    orders = [0,1,-1]
+    for i in orders:
+        # Calculate reflection and transmission at angle=theta for various orders i=0,1,-1
+        Rs = np.append(Rs, sum(Ri[ords[:,0] == i]))
+        Ts = np.append(Ts, sum(Ti[ords[:,0] == i]))
+    
+    e = (Rs + Ts)/(sum(Ri) + sum(Ti))
+
+
+    ## Change in efficiency in order -1 as theta changes
+    '''
+    This can be done in a few ways. Haven't yet decided which one is the best. Also sub-optimal as it requires
+    recompiling the grcwa solver.
+    '''
+    En1_fun = lambda theta: grcwa_efficiencies(nG,orders,cell_geometry,Nx,d,theta,freq)[-1]
+    pEn1_pTheta = grad(En1_fun)(0.)
+    # numerical_partial = (En1_fun(0.005) - En1_fun(-0.005)) / 0.01
+    
+    ## Speed of light and wavelength of the incident light
+    wavelength = c/freq
+
+    ## Relativistic terms
+    beta = v/c
+    gamma = 1/np.sqrt(1-beta**2)
+    D1 = beta*gamma + gamma - 1
+
+    ## Transverse force
+    return -(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + (e[1] + e[-1])*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
     
 

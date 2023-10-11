@@ -433,7 +433,7 @@ def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta):
         Rs = np.append(Rs, sum(Ri[ords[:,0] == i]))
         Ts = np.append(Ts, sum(Ti[ords[:,0] == i]))
     
-    e = (Rs + Ts)/(sum(Ri) + sum(Ti))
+    e = (Rs + Ts)/(sum(Rs) + sum(Ts))
 
 
     ## Change in efficiency in order -1 as theta changes
@@ -472,7 +472,7 @@ def valid_eps(vars,d,Nx,w1,w2):
         vars[0] = E_vacuum + (vars[0] - E_Si)
         w1 = w1 + 2*d/(Nx-1)
 
-    if vars[0] > E_Si:
+    if vars[1] > E_Si:
         vars[1] = E_vacuum + (vars[1] - E_Si)
         w2 = w2 + 2*d/(Nx-1)
 

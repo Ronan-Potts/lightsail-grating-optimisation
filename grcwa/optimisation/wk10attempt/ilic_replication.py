@@ -41,7 +41,6 @@ Tis = np.empty((len(thetas), len(orders)))
 
 
 cell_geometry, eps1, eps2 = core.linear_boundary_geometry(Nx,d,x1,x2,w1,w2)
-print(eps1,eps2)
 for j in range(0,len(thetas)):
     theta = thetas[j]
     Rs,Ts = core.grcwa_reflectance_transmittance_orders(nG,orders,Nx,d,theta*180/np.pi,freq,x1,x2,w1,w2)

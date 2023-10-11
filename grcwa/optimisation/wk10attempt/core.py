@@ -1,3 +1,10 @@
+'''
+Comments:
+    * GRCWA does not give accurate results for small Nx (i.e. Nx < 181). When using this code, I recommend a large Nx
+    value. Computation time does not seem to scale with Nx, so something like Nx=1801 will generally be fine.
+
+'''
+
 import grcwa
 grcwa.set_backend('autograd')  # important!!
 
@@ -51,6 +58,10 @@ def linear_boundary_geometry(Nx,d,x1,x2,w1,w2):
     if x2/(d/(Nx-1)) - int(x2/(d/(Nx-1))) > 0:
         raise Exception("x2 must be an integer multiple of the slice width d/(Nx-1).")
         # ... otherwise I would need to make the code needlessly complicated.
+    if w1/(2*d/(Nx-1)) - int(w1/(2*d/(Nx-1))) > 0:
+        print("Warning: w1 is not twice an integer multiple of the slice width d/(Nx-1). There will be a boundary permittivity here.")
+    if w2/(2*d/(Nx-1)) - int(w2/(2*d/(Nx-1))) > 0:
+        print("Warning: w2 is not twice an integer multiple of the slice width d/(Nx-1). There will be a boundary permittivity here.")
     
 
     ### Generating basic unit cell
@@ -126,6 +137,12 @@ def linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,vars):
         eps2: the permittivity at the boundary of element 2
     '''
 
+    if x1/(d/(Nx-1)) - int(x1/(d/(Nx-1))) > 0:
+        raise Exception("x1 must be an integer multiple of the slice width d/(Nx-1).")
+        # ... otherwise I would need to make the code needlessly complicated.
+    if x2/(d/(Nx-1)) - int(x2/(d/(Nx-1))) > 0:
+        raise Exception("x2 must be an integer multiple of the slice width d/(Nx-1).")
+        # ... otherwise I would need to make the code needlessly complicated.
     if x1 > x2:
         raise Exception("x1 should be less than x2, otherwise eps1 will correspond to element 2.")
 

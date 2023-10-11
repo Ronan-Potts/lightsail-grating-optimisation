@@ -3,7 +3,7 @@ import numpy as np
 # Truncation order
 nG = 30
 # Resolution 
-Nx = 1001
+Nx = 1801
 
 # Permittivities
 E_vacuum = 1.

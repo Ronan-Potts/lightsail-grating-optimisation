@@ -4,10 +4,10 @@ from autograd import grad
 
 ## Discretisation values
 nG = 30
-Nx = 181
+Nx = 1801
 
 ## Sail speed
-beta = 0.02
+beta = 0.2
 
 ## Ilic cell parameters
 d = 1.8
@@ -117,13 +117,15 @@ while optimising:
 
 '''
 Objectives:
-    1) Ensure that cell_geometry is dynamically changing                                    DONE
+    1) (11/10/23) Ensure that cell_geometry is dynamically changing                                    DONE on 11/10/23
 
-    2) Fix eps going out of bounds with beta = 0.02                                         DONE
+    2) (11/10/23) Fix eps going out of bounds with beta = 0.02                                         DONE on 11/10/23
 
-    3) Fix overstepping display. The vars[0] and vars[1] variables should be changing       DONE
+    3) (11/10/23) Fix overstepping display. The vars[0] and vars[1] variables should be changing       DONE on 11/10/23
 
-    4) Fix gradient direction for beta = 0.02 vs beta = 0.2. I keep having to change 
+    4) (11/10/23) Fix gradient direction for beta = 0.02 vs beta = 0.2. I keep having to change 
     vars = vars + ... into vars = vars - ... to approach the minimum. It should be
     vars = vars - ..., but beta = 0.02 is completely reversed (incorrect).
+
+    5) Implement a beam search
 '''

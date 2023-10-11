@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 ### Ilic Replication
-Nx = 181 # don't keep this too low: the boundary epsilons are not very representative of a real cell. Nx=181 is good
+Nx = 1801 # don't keep this too low: the boundary epsilons are not very representative of a real cell. Nx=181 is good
 Ny = 1
 nG = 30
 beta = 0.02
@@ -41,6 +41,12 @@ Tis = np.empty((len(thetas), len(orders)))
 
 
 cell_geometry, eps1, eps2 = core.linear_boundary_geometry(Nx,d,x1,x2,w1,w2)
+# Visualising the unit cell
+plt.imshow(cell_geometry, interpolation='nearest', aspect='auto')
+plt.xlabel("y")
+plt.ylabel("x")
+plt.show()
+
 for j in range(0,len(thetas)):
     theta = thetas[j]
     Rs,Ts = core.grcwa_reflectance_transmittance_orders(nG,orders,Nx,d,theta*180/np.pi,freq,x1,x2,w1,w2)

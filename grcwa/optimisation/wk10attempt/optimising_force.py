@@ -44,6 +44,7 @@ w_vals = []
 # Optimisation loop
 print(r"Ready to optimise with BETA = {}, nG = {}, Nx = {}".format(beta,nG,Nx))
 step = 0
+overstep_count = 0
 optimising = True
 while optimising:
     ## Print initial values
@@ -76,19 +77,24 @@ while optimising:
         obj = min_objective(vars)
         
         # Condition 1: minimum has been overstepped, leading objective to increase
-        overstep_count = 0
-        if obj - obj_vals[-1] > 1e-5 :
+        if obj - obj_vals[-1] > 1e-5:
             overstep_count += 1
             if overstep_count > 20:
                 print("Optimum reached after {} steps.".format(step))
                 break
-            
-            step_size = 0.9*step_size # decrease the step size
-            print("{:<8} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | OVERSTEP #{}".format(step,obj,vars[0],vars[1],w1,w2,overstep_count))
-            continue
+            else:
+                step_size = 0.9*step_size # decrease the step size
+                print("{:<8} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format('OVERSTEP',obj,vars[0],vars[1],w1,w2))
+                
+                vars = var_vals[-1] # move vars back to their original place
+                w1 = w_vals[-1][0]
+                w2 = w_vals[-1][1]
+                continue
+        else:
+            overstep_count = 0
 
         # Condition 2: recent values are identical
-        elif step > 5 and max(obj_vals[-2:]) - min(obj_vals[-2:]) < 1e-3:
+        if step > 5 and max(obj_vals[-2:]) - min(obj_vals[-2:]) < 1e-3:
             step_size = 2*step_size # increase step size for next time
             
 
@@ -112,8 +118,12 @@ while optimising:
 '''
 Objectives:
     1) Ensure that cell_geometry is dynamically changing                                    DONE
+
     2) Fix eps going out of bounds with beta = 0.02                                         DONE
-    3) Fix overstepping display. The vars[0] and vars[1] variables should be changing
-    4) Fix gradient direction for beta = 0.02 vs beta = 0.2. I keep having to change vars = vars + ... into vars = vars - ... to approach the minimum.
-    It should be vars = vars - ..., but beta = 0.02 is completely reversed (incorrect).
+
+    3) Fix overstepping display. The vars[0] and vars[1] variables should be changing       DONE
+
+    4) Fix gradient direction for beta = 0.02 vs beta = 0.2. I keep having to change 
+    vars = vars + ... into vars = vars - ... to approach the minimum. It should be
+    vars = vars - ..., but beta = 0.02 is completely reversed (incorrect).
 '''

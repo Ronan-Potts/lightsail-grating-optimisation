@@ -1,5 +1,5 @@
 import core
-
+import numpy as np
 # Truncation order
 nG = 30
 # Resolution 
@@ -53,10 +53,3 @@ efficiencies = core.grcwa_efficiencies(nG,orders,cell_geometry,Nx,d,theta,freq)
 print("Efficiencies:", efficiencies)
 
 
-### Transverse force
-Nx = 41
-nG = 30
-beta = 0.02
-cell_geometry = core.linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,[8.932,8.154])
-force = core.grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta)
-print("Transverse force: {} I A' v_y/c".format(force))

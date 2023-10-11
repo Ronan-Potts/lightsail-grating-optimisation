@@ -61,8 +61,8 @@ def linear_boundary_geometry(Nx,d,x1,x2,w1,w2):
     y0 = np.linspace(0,dy,Ny)
     x, y = np.meshgrid(x0,y0, indexing='ij')
 
-    filter1 = abs(x - x1) <= w1/2
-    filter2 = abs(x-x2) <= w2/2
+    filter1 = abs(x - x1) + d/(2*(Nx-1)) <= w1/2
+    filter2 = abs(x - x2) + d/(2*(Nx-1)) <= w2/2
     cell_geometry = np.ones((Nx,Ny)) * E_vacuum
     cell_geometry[filter1 | filter2] = E_Si
 
@@ -136,8 +136,8 @@ def linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,vars):
     y0 = np.linspace(0,dy,Ny)
     x, y = np.meshgrid(x0,y0, indexing='ij')
 
-    filter1 = abs(x - x1) <= w1/2
-    filter2 = abs(x-x2) <= w2/2
+    filter1 = abs(x - x1) + d/(2*(Nx-1)) <= w1/2
+    filter2 = abs(x - x2) + d/(2*(Nx-1)) <= w2/2
     cell_geometry = np.ones((Nx,Ny)) * E_vacuum
     cell_geometry[filter1 | filter2] = E_Si
 
@@ -182,7 +182,7 @@ def grcwa_reflectance_transmittance(nG,cell_geometry,Nx,d,theta,freq):
 
         d: width of the unit cell.
 
-        theta: incident angle of light.
+        theta: incident angle of light, in degrees.
 
     '''
     ## Frequency
@@ -222,7 +222,7 @@ def grcwa_reflectance_transmittance(nG,cell_geometry,Nx,d,theta,freq):
     R,T= obj.RT_Solve(normalize=1)
     return R,T
 
-def grcwa_reflectance_transmittance_orders(nG,orders,cell_geometry,Nx,d,theta,freq):
+def grcwa_reflectance_transmittance_orders(nG,orders,Nx,d,theta,freq,x1,x2,w1,w2):
     '''
     Calculates the reflectance of the infinitely extended unit cell.
 
@@ -237,6 +237,15 @@ def grcwa_reflectance_transmittance_orders(nG,orders,cell_geometry,Nx,d,theta,fr
         theta: incident angle of light.
 
     '''
+    cell_geometry = np.ones((Nx,Ny), dtype=float)*E_vacuum
+
+    x0 = np.linspace(0,d,Nx)
+    y0 = np.linspace(0,dy,Ny)
+    x, y = np.meshgrid(x0,y0, indexing='ij')
+    # The design will be completely uniform in the y-direction.
+    filter = (abs(x-x1) <= w1/2) | (abs(x-x2) <= w2/2)
+    cell_geometry[filter] = E_Si
+
     ## Frequency
     Qabs = np.inf
     freqcmp = freq*(1+1j/2/Qabs)
@@ -449,3 +458,22 @@ def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta):
 
     ## Transverse force
     return -1*(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + 2*e[1]*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
+
+def valid_eps(vars,d,Nx,w1,w2):
+    if vars[0] < E_vacuum:
+        vars[0] = E_Si - (E_vacuum - vars[0])
+        w1 = w1 - 2*d/(Nx-1)
+
+    if vars[1] < E_vacuum:
+        vars[1] = E_Si - (E_vacuum - vars[1])
+        w2 = w2 - 2*d/(Nx-1)
+
+    if vars[0] > E_Si:
+        vars[0] = E_vacuum + (vars[0] - E_Si)
+        w1 = w1 + 2*d/(Nx-1)
+
+    if vars[0] > E_Si:
+        vars[1] = E_vacuum + (vars[1] - E_Si)
+        w2 = w2 + 2*d/(Nx-1)
+
+    return vars,w1,w2

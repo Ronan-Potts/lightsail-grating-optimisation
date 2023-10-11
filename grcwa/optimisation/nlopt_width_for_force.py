@@ -17,7 +17,7 @@ Discretisation values
 # Truncation order
 nG = 30
 # Resolution 
-Nx = 161
+Nx = 181
 Ny = 1
 
 '''
@@ -26,13 +26,14 @@ Lattice cell parameters
 # Defining Ilic dimensions
 d = 1.8  # unit cell width
 dy = 1e-1
-x1 = 0.85*d # positions of blocks in unit cell
-x2 = 0.25*d 
-w1 = 0.15*d # width of blocks in unit cell
-w2 = 0.35*d
+x1 = 0.25*d # positions of blocks in unit cell
+x2 = 0.85*d 
+w1 = 0.35*d # width of blocks in unit cell
+w2 = 0.15*d
 
 h = 0.5  # thickness of resonator layer
 t = 0.5  # also equal to thickness of substrate layer
+v_width = 2
 
 E_vacuum = 1.
 E_Si = 3.5**2     # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
@@ -136,10 +137,10 @@ def En1_func(theta, cell_geometry):
     ######### setting up RCWA
     obj = grcwa.obj(nG,L1,L2,freqcmp,theta*np.pi/180,phi*np.pi/180,verbose=0)
     # input layer information
-    obj.Add_LayerUniform(0,E_vacuum)     # Layer 0
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 0
     obj.Add_LayerGrid(h,Nx,Ny)           # Layer 1
     obj.Add_LayerUniform(t,E_SiO2)       # Layer 2
-    obj.Add_LayerUniform(0,E_vacuum)     # Layer 3
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 3
     obj.Init_Setup()
 
 
@@ -180,10 +181,10 @@ def cost_function(vars,Qabs,v):
     ######### setting up RCWA
     obj = grcwa.obj(nG,L1,L2,freqcmp,theta*np.pi/180,phi*np.pi/180,verbose=0)
     # input layer information
-    obj.Add_LayerUniform(0,E_vacuum)     # Layer 0
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 0
     obj.Add_LayerGrid(h,Nx,Ny)           # Layer 1
     obj.Add_LayerUniform(t,E_SiO2)       # Layer 2
-    obj.Add_LayerUniform(0,E_vacuum)     # Layer 3
+    obj.Add_LayerUniform(v_width,E_vacuum)     # Layer 3
     obj.Init_Setup()
 
 
@@ -229,7 +230,7 @@ fig1, ax1 = plt.subplots()
 # nlopt function
 ctrl = 0
 Qabs = np.inf
-v = 0.2*c
+v = 0.02*c
 fun = lambda vars: cost_function(vars,Qabs,v)
 grad_fun = grad(fun)
 
@@ -273,7 +274,7 @@ NLOPT Setup
 ndof = 2
 init = [w1,w2]
 lb = [0,0]
-ub = [0.3*d,0.5*d]
+ub = [0.5*d,0.3*d]
 
 opt = nlopt.opt(nlopt.LD_MMA, ndof)
 opt.set_lower_bounds(lb)

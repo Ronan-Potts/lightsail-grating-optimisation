@@ -21,7 +21,7 @@ Discretisation values
 # Truncation order
 nG = 30
 # Resolution 
-Nx = 41
+Nx = 181
 Ny = 1
 
 
@@ -50,7 +50,7 @@ t = 0.5  # also equal to thickness of substrate layer
 v_width = 2
 
 E_vacuum = 1.
-E_Si = 3.5**2    # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
+E_Si = 3.5**2     # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
 E_SiO2 = 1.45**2  # https://refractiveindex.info/ with k = n^2 (dielectric constant, refractive index)
 
 

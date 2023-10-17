@@ -433,7 +433,6 @@ def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta):
         theta: incident angle of light.
 
         beta: the speed of the sail, as a multiple of the speed of light.
-
     '''
     ## Frequency
     Qabs = np.inf
@@ -508,20 +507,25 @@ def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta):
     ## Transverse force
     return -1*(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + 2*e[1]*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
 
+def valid(vars):
+    if vars[0] < E_vacuum or vars[0] > E_Si:
+        return False
+    if vars[1] < E_vacuum or vars[1] > E_Si:
+        return False
+    return True
+
 def valid_eps(vars,d,Nx,w1,w2):
     if vars[0] < E_vacuum:
         vars[0] = E_Si - (E_vacuum - vars[0])
         w1 = w1 - 2*d/(Nx-1)
+    elif vars[0] > E_Si:
+        vars[0] = E_vacuum + (vars[0] - E_Si)
+        w1 = w1 + 2*d/(Nx-1)
 
     if vars[1] < E_vacuum:
         vars[1] = E_Si - (E_vacuum - vars[1])
         w2 = w2 - 2*d/(Nx-1)
-
-    if vars[0] > E_Si:
-        vars[0] = E_vacuum + (vars[0] - E_Si)
-        w1 = w1 + 2*d/(Nx-1)
-
-    if vars[1] > E_Si:
+    elif vars[1] > E_Si:
         vars[1] = E_vacuum + (vars[1] - E_Si)
         w2 = w2 + 2*d/(Nx-1)
 

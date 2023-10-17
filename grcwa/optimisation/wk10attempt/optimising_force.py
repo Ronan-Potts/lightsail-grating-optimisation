@@ -50,9 +50,9 @@ while optimising:
     ## Print initial values
     if step == 0:
         obj = min_objective(vars)
-        print("{:<8} | {:<10} | {:<8} | {:<8} | {:<8} | {:<8}".format("Step", "Objective", 'eps1', 'eps2', 'w1', 'w2'))
-        print("----------------------------------------------------------------")
-        print("{:<8} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format(step,obj,vars[0],vars[1],w1,w2))
+        print("{:<13} | {:<10} | {:<8} | {:<8} | {:<8} | {:<8}".format("Step", "Objective", 'eps1', 'eps2', 'w1', 'w2'))
+        print("------------------------------------------------------------------")
+        print("{:<13} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format(step,obj,vars[0],vars[1],w1,w2))
 
         # Add to history of parameters and objective values
         var_vals.append(vars)
@@ -62,17 +62,20 @@ while optimising:
     ## Perform Optimisation
     else:
         if step % 8 == 0:
-            print("----------------------------------------------------------------")
-            print("{:<8} | {:<10} | {:<8} | {:<8} | {:<8} | {:<8}".format("Step", "Objective", 'eps1', 'eps2', 'w1', 'w2'))
-            print("----------------------------------------------------------------")
+            print("---------------------------------------------------------------------")
+            print("{:<13} | {:<10} | {:<8} | {:<8} | {:<8} | {:<8}".format("Step", "Objective", 'eps1', 'eps2', 'w1', 'w2'))
+            print("---------------------------------------------------------------------")
 
         # Calculate current gradient
         grad = grad_fun(vars)
 
         # Step in direction of local minimum
         vars = vars + step_size*np.array(grad)
-        # Ensure that the permittivities are from E_vacuum to E_Si
-        vars, w1, w2 = core.valid_eps(vars, d, Nx, w1, w2)
+
+        # Ensure that the permittivities are in range [E_vacuum, E_Si]
+        while core.valid(vars) == False:
+            vars, w1, w2 = core.valid_eps(vars, d, Nx, w1, w2)
+
         # Calculate cost function after stepping
         obj = min_objective(vars)
         
@@ -80,11 +83,11 @@ while optimising:
         if obj - obj_vals[-1] > 1e-5:
             overstep_count += 1
             if overstep_count > 20:
-                print("Optimum reached after {} steps.".format(step))
+                print("\nOptimum reached after {} steps.".format(step))
                 break
             else:
                 step_size = 0.9*step_size # decrease the step size
-                print("{:<8} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format('OVERSTEP',obj,vars[0],vars[1],w1,w2))
+                print("{:<13} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format('OVERSTEP #{}'.format(overstep_count),obj,vars[0],vars[1],w1,w2), end='\r')
                 
                 vars = var_vals[-1] # move vars back to their original place
                 w1 = w_vals[-1][0]
@@ -98,15 +101,13 @@ while optimising:
             step_size = 2*step_size # increase step size for next time
             
 
-        
-
         # Add to history of parameters and objective values
         var_vals.append(vars)
         obj_vals.append(obj)
         w_vals.append([w1,w2])
 
         ## Print current state to terminal
-        print("{:<8} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format(step,obj,vars[0],vars[1],w1,w2))
+        print("{:<13} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format(step,obj,vars[0],vars[1],w1,w2))
             
                 
 

@@ -135,7 +135,7 @@ Objectives:
     vars = vars + ... into vars = vars - ... to approach the minimum. It should be
     vars = vars - ..., but beta = 0.02 is completely reversed (incorrect).
 
-    5) Implement a beam search
+    5) Implement a beam search                                                                         
 
-    6) Make all four boundaries independent in optimiser
+    6) Make all four boundaries independent in optimiser                                               DONE
 '''

@@ -11,7 +11,7 @@ nG = 30
 Nx = 1801
 
 ## Sail speed
-beta = 0.05
+beta = 0.2
 
 ## Ilic cell parameters
 d = 1.8
@@ -79,6 +79,8 @@ while optimising:
         cbar.set_label("Permittivity")
         plt.xlabel("y")
         plt.ylabel("x")
+        plt.title(r"Initialisation, Force Component = {} $I A' v_y / c$ with $\beta = {}$".format(round(obj,3),beta))
+        plt.savefig('grcwa/figs/INITIAL_optimising_force_2.0.png')
 
     ## Perform Optimisation
     else:
@@ -104,11 +106,6 @@ while optimising:
         if obj - obj_vals[-1] > 1e-5:
             overstep_count += 1
             if overstep_count > 20:
-                vars = var_vals[-1] # move vars back to their original place
-                x1 = x_vals[-1][0]
-                x2 = x_vals[-1][1]
-                w1 = w_vals[-1][0]
-                w2 = w_vals[-1][1]
                 print("\nOptimum reached after {} steps.".format(step))
                 break
             else:
@@ -116,10 +113,6 @@ while optimising:
                 print("{:<13} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format('OVERSTEP #{}'.format(overstep_count),obj,vars[0],vars[1],x1,x2,w1,w2), end='\r')
                 
                 vars = var_vals[-1] # move vars back to their original place
-                x1 = x_vals[-1][0]
-                x2 = x_vals[-1][1]
-                w1 = w_vals[-1][0]
-                w2 = w_vals[-1][1]
                 continue
         else:
             overstep_count = 0
@@ -141,14 +134,22 @@ while optimising:
         ## Update figure
         cell_geometry = core.independent_boundary_geometry(Nx,d,x1,x2,w1,w2,vars[0],vars[1],vars[2],vars[3])
         anim1.set_data(cell_geometry)
+        plt.title(r"Step {}, Force Component = {} $I A' v_y / c$ with $\beta = {}$".format(step, round(obj,3),beta))
         fig1.canvas.flush_events()
 
     step += 1 # move to next step in optimisation
 
+x1,x2 = x_vals[-1]
+w1,w2 = w_vals[-1]
 basic_geometry = core.basic_cell_geometry(Nx,d,x1,x2,w1,w2)
 basic_cost = core.grcwa_transverse_force(nG, basic_geometry, Nx, d, theta, freq, beta)
 print("Cost without boundary permittivities:", basic_cost)
 
+plt.imshow(basic_geometry, interpolation='nearest', vmin=0, vmax=E_Si, aspect='auto')
+plt.xlabel("y")
+plt.ylabel("x")
+plt.title(r"Final result, Step {}, Force Component = {} $I A' v_y / c$ with $\beta = {}$".format(step, round(basic_cost,3),beta))
+plt.savefig('grcwa/figs/FINAL_optimising_force_2.0.png')
 
 '''
 Objectives:

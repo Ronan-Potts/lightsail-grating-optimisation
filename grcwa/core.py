@@ -270,10 +270,14 @@ def independent_boundary_geometry(Nx,d,x1,x2,w1,w2,epsT1,epsT2,epsB1,epsB2):
 
     ### Change boundary permittivities
     cell_geometry = cell_geometry.tolist()     # if I don't convert to list, I get a weird numpy value error.
-    cell_geometry[boundary_indices[0]][0] = epsT1
-    cell_geometry[boundary_indices[1]][0] = epsB1
-    cell_geometry[boundary_indices[2]][0] = epsT2
-    cell_geometry[boundary_indices[3]][0] = epsB2
+    if len(boundary_indices) == 4:
+        cell_geometry[boundary_indices[0]][0] = epsT1
+        cell_geometry[boundary_indices[1]][0] = epsB1
+        cell_geometry[boundary_indices[2]][0] = epsT2
+        cell_geometry[boundary_indices[3]][0] = epsB2
+    elif len(boundary_indices) == 2:
+        cell_geometry[boundary_indices[0]][0] = epsT1
+        cell_geometry[boundary_indices[1]][0] = epsB2
     cell_geometry = np.array(cell_geometry)
 
     # cell_geometry is a 1D array whose values correspond to the permittivity of each spatial slice in the unit cell.

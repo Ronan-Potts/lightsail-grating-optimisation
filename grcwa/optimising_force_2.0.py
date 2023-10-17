@@ -6,6 +6,8 @@ import autograd.numpy as np
 from autograd import grad
 import matplotlib.pyplot as plt
 
+save_figs = False
+
 ## Discretisation values
 nG = 30
 Nx = 1801
@@ -47,6 +49,7 @@ grad_fun = grad(min_objective)
 vars = [eps1,eps2,eps1,eps2] # top of e1, top of e2, bottom of e1, bottom of e2
 step_size = 1/np.sqrt(np.sum(np.array(grad_fun(vars))**2)) # define step size so that first step is of size 1
 obj_vals = []
+all_objs = []
 var_vals = []
 w_vals = []
 x_vals = []
@@ -66,6 +69,7 @@ while optimising:
 
         # Add to history of parameters and objective values
         var_vals.append(vars)
+        all_objs.append(obj)
         obj_vals.append(obj)
         x_vals.append([x1,x2])
         w_vals.append([w1,w2])
@@ -80,7 +84,8 @@ while optimising:
         plt.xlabel("y")
         plt.ylabel("x")
         plt.title(r"Initialisation, Force Component = {} $I A' v_y / c$ with $\beta = {}$".format(round(obj,3),beta))
-        plt.savefig('grcwa/figs/INITIAL_optimising_force_2.0.png')
+        if save_figs:
+            plt.savefig('grcwa/figs/INITIAL_optimising_force_2.0.png')
 
     ## Perform Optimisation
     else:
@@ -105,14 +110,24 @@ while optimising:
         # Condition 1: minimum has been overstepped, leading objective to increase
         if obj - obj_vals[-1] > 1e-5:
             overstep_count += 1
+            all_objs.append(obj)
             if overstep_count > 20:
                 print("\nOptimum reached after {} steps.".format(step))
+                vars = var_vals[-1] # move vars back to their original place
+                w1 = w_vals[-1][0]
+                w2 = w_vals[-1][1]
+                x1 = x_vals[-1][0]
+                x2 = x_vals[-1][1]
                 break
             else:
                 step_size = 0.9*step_size # decrease the step size
                 print("{:<13} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format('OVERSTEP #{}'.format(overstep_count),obj,vars[0],vars[1],x1,x2,w1,w2), end='\r')
                 
                 vars = var_vals[-1] # move vars back to their original place
+                w1 = w_vals[-1][0]
+                w2 = w_vals[-1][1]
+                x1 = x_vals[-1][0]
+                x2 = x_vals[-1][1]
                 continue
         else:
             overstep_count = 0
@@ -124,6 +139,7 @@ while optimising:
 
         # Add to history of parameters and objective values
         var_vals.append(vars)
+        all_objs.append(obj)
         obj_vals.append(obj)
         x_vals.append([x1,x2])
         w_vals.append([w1,w2])
@@ -148,8 +164,20 @@ print("Cost without boundary permittivities:", basic_cost)
 plt.imshow(basic_geometry, interpolation='nearest', vmin=0, vmax=E_Si, aspect='auto')
 plt.xlabel("y")
 plt.ylabel("x")
-plt.title(r"Final result, Step {}, Force Component = {} $I A' v_y / c$ with $\beta = {}$".format(step, round(basic_cost,3),beta))
-plt.savefig('grcwa/figs/FINAL_optimising_force_2.0.png')
+plt.title(r"Final, Step {}, Force Component = {} $I A' v_y / c$ with $\beta = {}$".format(step, round(basic_cost,3),beta))
+if save_figs:
+    plt.savefig('grcwa/figs/FINAL_optimising_force_2.0.png')
+
+
+
+plt.close()
+
+## Mapping out objective function
+all_objs.sort()
+steps = range(0,len(all_objs))
+
+plt.plot(steps, all_objs, 'o')
+plt.savefig('grcwa/figs/optimising_force_2.0.png')
 
 '''
 Objectives:

@@ -612,39 +612,39 @@ def valid_eps(vars,d,Nx,x1,x2,w1,w2):
     elif len(vars) == 4:
         if vars[0] < E_vacuum:
             vars[0] = E_Si - (E_vacuum - vars[0])
-            x1 = x1 - 0.5*d/(Nx-1)
+            x1 = x1 + 0.5*d/(Nx-1)
             w1 = w1 - d/(Nx-1)
         elif vars[0] > E_Si:
             vars[0] = E_vacuum + (vars[0] - E_Si)
-            x1 = x1 + 0.5*d/(Nx-1)
+            x1 = x1 - 0.5*d/(Nx-1)
             w1 = w1 + d/(Nx-1)
             pass
 
         if vars[1] < E_vacuum:
             vars[1] = E_Si - (E_vacuum - vars[1])
-            x2 = x2 - 0.5*d/(Nx-1)
+            x2 = x2 + 0.5*d/(Nx-1)
             w2 = w2 - d/(Nx-1)
         elif vars[1] > E_Si:
             vars[1] = E_vacuum + (vars[1] - E_Si)
-            x2 = x2 + 0.5*d/(Nx-1)
+            x2 = x2 - 0.5*d/(Nx-1)
             w2 = w2 + d/(Nx-1)
 
         if vars[2] < E_vacuum:
             vars[2] = E_Si - (E_vacuum - vars[2])
-            x1 = x1 + 0.5*d/(Nx-1)
+            x1 = x1 - 0.5*d/(Nx-1)
             w1 = w1 - d/(Nx-1)
         elif vars[2] > E_Si:
             vars[2] = E_vacuum + (vars[2] - E_Si)
-            x1 = x1 - 0.5*d/(Nx-1)
+            x1 = x1 + 0.5*d/(Nx-1)
             w1 = w1 + d/(Nx-1)
 
         if vars[3] < E_vacuum:
             vars[3] = E_Si - (E_vacuum - vars[3])
-            x2 = x2 + 0.5*d/(Nx-1)
+            x2 = x2 - 0.5*d/(Nx-1)
             w2 = w2 - d/(Nx-1)
         elif vars[3] > E_Si:
             vars[3] = E_vacuum + (vars[3] - E_Si)
-            x2 = x2 - 0.5*d/(Nx-1)
+            x2 = x2 + 0.5*d/(Nx-1)
             w2 = w2 + d/(Nx-1)
 
         return vars,x1,x2,w1,w2

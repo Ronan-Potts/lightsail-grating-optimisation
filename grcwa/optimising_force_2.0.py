@@ -11,7 +11,7 @@ nG = 30
 Nx = 1801
 
 ## Sail speed
-beta = 0.2
+beta = 0.05
 
 ## Ilic cell parameters
 d = 1.8
@@ -49,6 +49,7 @@ step_size = 1/np.sqrt(np.sum(np.array(grad_fun(vars))**2)) # define step size so
 obj_vals = []
 var_vals = []
 w_vals = []
+x_vals = []
 
 # Optimisation loop
 print(r"Ready to optimise with BETA = {}, nG = {}, Nx = {}".format(beta,nG,Nx))
@@ -66,6 +67,7 @@ while optimising:
         # Add to history of parameters and objective values
         var_vals.append(vars)
         obj_vals.append(obj)
+        x_vals.append([x1,x2])
         w_vals.append([w1,w2])
 
         
@@ -102,6 +104,11 @@ while optimising:
         if obj - obj_vals[-1] > 1e-5:
             overstep_count += 1
             if overstep_count > 20:
+                vars = var_vals[-1] # move vars back to their original place
+                x1 = x_vals[-1][0]
+                x2 = x_vals[-1][1]
+                w1 = w_vals[-1][0]
+                w2 = w_vals[-1][1]
                 print("\nOptimum reached after {} steps.".format(step))
                 break
             else:
@@ -109,6 +116,8 @@ while optimising:
                 print("{:<13} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format('OVERSTEP #{}'.format(overstep_count),obj,vars[0],vars[1],x1,x2,w1,w2), end='\r')
                 
                 vars = var_vals[-1] # move vars back to their original place
+                x1 = x_vals[-1][0]
+                x2 = x_vals[-1][1]
                 w1 = w_vals[-1][0]
                 w2 = w_vals[-1][1]
                 continue
@@ -123,6 +132,7 @@ while optimising:
         # Add to history of parameters and objective values
         var_vals.append(vars)
         obj_vals.append(obj)
+        x_vals.append([x1,x2])
         w_vals.append([w1,w2])
 
         ## Print current state to terminal

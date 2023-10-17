@@ -36,6 +36,38 @@ v_width = 2    # thickness of vacuum layers
 
 ## Sail speed
 c = 1.
+
+def basic_cell_geometry(Nx,d,x1,x2,w1,w2):
+    '''
+    This function defines a 2D two-element unit cell with the widths and positions of the elements given.
+
+        Nx: the number of slices used to spatially discretise the unit cell.
+        
+        d: the size of the unit cell
+
+        x1: the central position of element 1 in the unit cell
+
+        x2: the central position of element 2 in the unit cell
+
+        w1: the width of element 1 in the unit cell
+
+        w2: the width of element 2 in the unit cell
+    '''    
+
+    ### Generating basic unit cell
+    # Defining coordinate system
+    x0 = np.linspace(0,d,Nx)
+    y0 = np.linspace(0,dy,Ny)
+    x, y = np.meshgrid(x0,y0, indexing='ij')
+
+    filter1 = abs(x - x1) + d/(2*(Nx-1)) <= w1/2
+    filter2 = abs(x - x2) + d/(2*(Nx-1)) <= w2/2
+    cell_geometry = np.ones((Nx,Ny)) * E_vacuum
+    cell_geometry[filter1 | filter2] = E_Si
+
+    # cell_geometry is a 1D array whose values correspond to the permittivity of each spatial slice in the unit cell.
+    return cell_geometry
+
 def linear_boundary_geometry(Nx,d,x1,x2,w1,w2):
     '''
     This function defines a 2D two-element unit cell with the widths and positions of the elements given.

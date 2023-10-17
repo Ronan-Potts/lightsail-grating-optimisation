@@ -70,7 +70,7 @@ while optimising:
         grad = grad_fun(vars)
 
         # Step in direction of local minimum
-        vars = vars - step_size*np.array(grad)
+        vars = vars + step_size*np.array(grad)
         # Ensure that the permittivities are from E_vacuum to E_Si
         vars, w1, w2 = core.valid_eps(vars, d, Nx, w1, w2)
         # Calculate cost function after stepping
@@ -112,8 +112,9 @@ while optimising:
 
     step += 1 # move to next step in optimisation
 
-
-
+basic_geometry = core.basic_cell_geometry(Nx,d,x1,x2,w1,w2)
+basic_cost = core.grcwa_transverse_force(nG, basic_geometry, Nx, d, theta, freq, beta)
+print("Cost without boundary permittivities:", basic_cost)
 
 '''
 Objectives:

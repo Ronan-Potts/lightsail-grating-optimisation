@@ -145,9 +145,7 @@ def linear_boundary_geometry(Nx,d,x1,x2,w1,w2):
     return cell_geometry, eps1, eps2
 
 
-def linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,vars):
-    eps1 = vars[0]
-    eps2 = vars[1]
+def linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,eps1,eps2):
     '''
     This function defines a 2D two-element unit cell with the widths and positions of the elements given, but the boundary
     permittivity of the unit cell specified externally.
@@ -217,6 +215,69 @@ def linear_permittivity_geometry(Nx,d,x1,x2,w1,w2,vars):
 
     # cell_geometry is a 1D array whose values correspond to the permittivity of each spatial slice in the unit cell.
     return cell_geometry
+
+def independent_boundary_geometry(Nx,d,x1,x2,w1,w2,epsT1,epsT2,epsB1,epsB2):
+    '''
+    This function defines a 2D two-element unit cell with the widths and positions of the elements given, but the boundary
+    permittivity of the unit cell specified externally.
+
+        Nx: the number of slices used to spatially discretise the unit cell.
+        
+        d: the size of the unit cell
+
+        x1: the central position of element 1 in the unit cell
+
+        x2: the central position of element 2 in the unit cell
+
+        w1: the width of element 1 in the unit cell
+
+        w2: the width of element 2 in the unit cell
+
+        epsT1: the permittivity at the top boundary of element 1
+
+        epsT2: the permittivity at the top boundary of element 2
+
+        epsB1: the permittivity at the bottom boundary of element 1
+
+        epsB2: the permittivity at the bottom boundary of element 2
+    '''
+    if x1 > x2:
+        raise Exception("x1 should be less than x2, otherwise eps1 will correspond to element 2.")
+
+    
+    ### Generating basic unit cell
+    # Defining coordinate system
+    x0 = np.linspace(0,d,Nx)
+    y0 = np.linspace(0,dy,Ny)
+    x, y = np.meshgrid(x0,y0, indexing='ij')
+
+    filter1 = abs(x - x1) + d/(2*(Nx-1)) <= w1/2
+    filter2 = abs(x - x2) + d/(2*(Nx-1)) <= w2/2
+    cell_geometry = np.ones((Nx,Ny)) * E_vacuum
+    cell_geometry[filter1 | filter2] = E_Si
+
+    ### Finding boundaries using the basic unit cell with eps = E_Si or E_vacuum
+    eps_1d = cell_geometry.flatten()
+
+    boundary_indices = []
+    for i in range(1,len(eps_1d)-1):
+        lower_neighbor = eps_1d[i-1]
+        current = eps_1d[i]
+        upper_neighbor = eps_1d[i+1]
+        if current == E_Si and (lower_neighbor == E_Si or upper_neighbor == E_Si) and (lower_neighbor != upper_neighbor):
+            # then we are at a boundary
+            boundary_indices.append(i)
+
+    ### Change boundary permittivities
+    cell_geometry = cell_geometry.tolist()     # if I don't convert to list, I get a weird numpy value error.
+    cell_geometry[boundary_indices[0]][0] = epsT1
+    cell_geometry[boundary_indices[1]][0] = epsB1
+    cell_geometry[boundary_indices[2]][0] = epsT2
+    cell_geometry[boundary_indices[3]][0] = epsB2
+    cell_geometry = np.array(cell_geometry)
+
+    # cell_geometry is a 1D array whose values correspond to the permittivity of each spatial slice in the unit cell.
+    return cell_geometry
     
     
 def grcwa_reflectance_transmittance(nG,cell_geometry,Nx,d,theta,freq):
@@ -232,8 +293,8 @@ def grcwa_reflectance_transmittance(nG,cell_geometry,Nx,d,theta,freq):
         d: width of the unit cell.
 
         theta: incident angle of light, in degrees.
-
     '''
+
     ## Frequency
     Qabs = np.inf
     freqcmp = freq*(1+1j/2/Qabs)
@@ -508,25 +569,81 @@ def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta):
     return -1*(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + 2*e[1]*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
 
 def valid(vars):
-    if vars[0] < E_vacuum or vars[0] > E_Si:
-        return False
-    if vars[1] < E_vacuum or vars[1] > E_Si:
-        return False
-    return True
+    if len(vars) == 2:
+        if vars[0] < E_vacuum or vars[0] > E_Si:
+            return False
+        if vars[1] < E_vacuum or vars[1] > E_Si:
+            return False
+        return True
+    elif len(vars) == 4:
+        if vars[0] < E_vacuum or vars[0] > E_Si:
+            return False
+        if vars[1] < E_vacuum or vars[1] > E_Si:
+            return False
+        if vars[2] < E_vacuum or vars[2] > E_Si:
+            return False
+        if vars[3] < E_vacuum or vars[3] > E_Si:
+            return False
+        return True
+    else:
+        raise Exception("Incorrect length for input variables. You input vars of length",len(vars),", where length 2 or 4 are needed.")
 
-def valid_eps(vars,d,Nx,w1,w2):
-    if vars[0] < E_vacuum:
-        vars[0] = E_Si - (E_vacuum - vars[0])
-        w1 = w1 - 2*d/(Nx-1)
-    elif vars[0] > E_Si:
-        vars[0] = E_vacuum + (vars[0] - E_Si)
-        w1 = w1 + 2*d/(Nx-1)
+def valid_eps(vars,d,Nx,x1,x2,w1,w2):
+    if len(vars) == 2:
+        if vars[0] < E_vacuum:
+            vars[0] = E_Si - (E_vacuum - vars[0])
+            w1 = w1 - 2*d/(Nx-1)
+        elif vars[0] > E_Si:
+            vars[0] = E_vacuum + (vars[0] - E_Si)
+            w1 = w1 + 2*d/(Nx-1)
 
-    if vars[1] < E_vacuum:
-        vars[1] = E_Si - (E_vacuum - vars[1])
-        w2 = w2 - 2*d/(Nx-1)
-    elif vars[1] > E_Si:
-        vars[1] = E_vacuum + (vars[1] - E_Si)
-        w2 = w2 + 2*d/(Nx-1)
+        if vars[1] < E_vacuum:
+            vars[1] = E_Si - (E_vacuum - vars[1])
+            w2 = w2 - 2*d/(Nx-1)
+        elif vars[1] > E_Si:
+            vars[1] = E_vacuum + (vars[1] - E_Si)
+            w2 = w2 + 2*d/(Nx-1)
 
-    return vars,w1,w2
+        return vars,w1,w2
+    elif len(vars) == 4:
+        if vars[0] < E_vacuum:
+            vars[0] = E_Si - (E_vacuum - vars[0])
+            x1 = x1 - 0.5*d/(Nx-1)
+            w1 = w1 - d/(Nx-1)
+        elif vars[0] > E_Si:
+            vars[0] = E_vacuum + (vars[0] - E_Si)
+            x1 = x1 + 0.5*d/(Nx-1)
+            w1 = w1 + d/(Nx-1)
+            pass
+
+        if vars[1] < E_vacuum:
+            vars[1] = E_Si - (E_vacuum - vars[1])
+            x2 = x2 - 0.5*d/(Nx-1)
+            w2 = w2 - d/(Nx-1)
+        elif vars[1] > E_Si:
+            vars[1] = E_vacuum + (vars[1] - E_Si)
+            x2 = x2 + 0.5*d/(Nx-1)
+            w2 = w2 + d/(Nx-1)
+
+        if vars[2] < E_vacuum:
+            vars[2] = E_Si - (E_vacuum - vars[2])
+            x1 = x1 + 0.5*d/(Nx-1)
+            w1 = w1 - d/(Nx-1)
+        elif vars[2] > E_Si:
+            vars[2] = E_vacuum + (vars[2] - E_Si)
+            x1 = x1 - 0.5*d/(Nx-1)
+            w1 = w1 + d/(Nx-1)
+
+        if vars[3] < E_vacuum:
+            vars[3] = E_Si - (E_vacuum - vars[3])
+            x2 = x2 + 0.5*d/(Nx-1)
+            w2 = w2 - d/(Nx-1)
+        elif vars[3] > E_Si:
+            vars[3] = E_vacuum + (vars[3] - E_Si)
+            x2 = x2 - 0.5*d/(Nx-1)
+            w2 = w2 + d/(Nx-1)
+
+        return vars,x1,x2,w1,w2
+
+    else:
+        raise Exception("Incorrect length for input variables. You input vars of length",len(vars),", where length 2 or 4 are needed.")

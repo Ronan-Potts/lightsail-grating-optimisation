@@ -117,6 +117,7 @@ basic_geometry = core.basic_cell_geometry(Nx,d,x1,x2,w1,w2)
 basic_cost = core.grcwa_transverse_force(nG, basic_geometry, Nx, d, theta, freq, beta)
 print("Cost without boundary permittivities:", basic_cost)
 
+
 '''
 Objectives:
     1) (11/10/23) Ensure that cell_geometry is dynamically changing                                    DONE on 11/10/23
@@ -125,7 +126,7 @@ Objectives:
 
     3) (11/10/23) Fix overstepping display. The vars[0] and vars[1] variables should be changing       DONE on 11/10/23
 
-    4) (11/10/23) Fix gradient direction for beta = 0.02 vs beta = 0.2. I keep having to change 
+    4) (11/10/23) Fix gradient direction for beta = 0.02 vs beta = 0.2. I keep having to change        DONE
     vars = vars + ... into vars = vars - ... to approach the minimum. It should be
     vars = vars - ..., but beta = 0.02 is completely reversed (incorrect).
 

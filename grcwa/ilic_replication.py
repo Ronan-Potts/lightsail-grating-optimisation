@@ -80,5 +80,5 @@ plt.ylabel("Reflection/transmission")
 plt.title("Reflection and transmission coefficients for asymmetric Ilic-style grating")
 plt.ylim([0,1.])
 
-plt.savefig('grcwa/ilic_replication/figs/ilic_GRCWA_rtmodes_nG{}'.format(nG))
+plt.savefig('grcwa/ilic_replication/figs/ilic_GRCWA_rtmodes_nG{}_Nx{}'.format(nG,Nx))
 plt.show()

@@ -6,7 +6,7 @@ import autograd.numpy as np
 from autograd import grad
 import matplotlib.pyplot as plt
 
-save_figs = False
+save_figs = True
 
 ## Discretisation values
 nG = 30
@@ -98,7 +98,7 @@ while optimising:
         grad = grad_fun(vars)
 
         # Step in direction of local minimum
-        vars = vars + step_size*np.array(grad)
+        vars = vars - step_size*np.array(grad)
 
         # Ensure that the permittivities are in range [E_vacuum, E_Si]
         while core.valid(vars) == False:
@@ -107,34 +107,24 @@ while optimising:
         # Calculate cost function after stepping
         obj = min_objective(vars)
         
+
+        # Condition 2: recent values are identical
+        if step > 5 and max(obj_vals[-2:]) - min(obj_vals[-2:]) < 1e-3:
+            step_size = 2*step_size # increase step size for next time
+            
         # Condition 1: minimum has been overstepped, leading objective to increase
         if obj - obj_vals[-1] > 1e-5:
             overstep_count += 1
             all_objs.append(obj)
             if overstep_count > 20:
                 print("\nOptimum reached after {} steps.".format(step))
-                vars = var_vals[-1] # move vars back to their original place
-                w1 = w_vals[-1][0]
-                w2 = w_vals[-1][1]
-                x1 = x_vals[-1][0]
-                x2 = x_vals[-1][1]
                 break
             else:
                 step_size = 0.9*step_size # decrease the step size
                 print("{:<13} | {:<10.5f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f} | {:<8.3f}".format('OVERSTEP #{}'.format(overstep_count),obj,vars[0],vars[1],x1,x2,w1,w2), end='\r')
-                
-                vars = var_vals[-1] # move vars back to their original place
-                w1 = w_vals[-1][0]
-                w2 = w_vals[-1][1]
-                x1 = x_vals[-1][0]
-                x2 = x_vals[-1][1]
                 continue
         else:
             overstep_count = 0
-
-        # Condition 2: recent values are identical
-        if step > 5 and max(obj_vals[-2:]) - min(obj_vals[-2:]) < 1e-3:
-            step_size = 2*step_size # increase step size for next time
             
 
         # Add to history of parameters and objective values
@@ -155,6 +145,7 @@ while optimising:
 
     step += 1 # move to next step in optimisation
 
+vars = var_vals[-1]
 x1,x2 = x_vals[-1]
 w1,w2 = w_vals[-1]
 basic_geometry = core.basic_cell_geometry(Nx,d,x1,x2,w1,w2)
@@ -176,7 +167,7 @@ plt.close()
 all_objs.sort()
 steps = range(0,len(all_objs))
 
-plt.plot(steps, all_objs, 'o')
+plt.plot(steps, all_objs)
 plt.savefig('grcwa/figs/optimising_force_2.0.png')
 
 '''

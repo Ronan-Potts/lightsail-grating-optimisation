@@ -7,7 +7,7 @@ Being numerical in nature, I need to define the truncation order of the fourier 
 # Truncation order
 nG = 30
 # Resolution 
-Nx = 18001
+Nx = 1601
 Ny = 1
 
 '''

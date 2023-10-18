@@ -421,7 +421,7 @@ def grcwa_efficiencies(nG,orders,cell_geometry,Nx,d,theta,freq):
 
         d: width of the unit cell.
 
-        theta: incident angle of light.
+        theta: incident angle of light in degrees.
     '''
     ## Frequency
     Qabs = np.inf
@@ -554,23 +554,26 @@ def grcwa_transverse_force(nG,cell_geometry,Nx,d,theta,freq,beta):
     This can be done in a few ways. Haven't yet decided which one is the best. Also sub-optimal as it requires
     recompiling the grcwa solver.
     '''
-    En1_fun = lambda theta: grcwa_efficiencies(nG,orders,cell_geometry,Nx,d,theta,freq)[-1]
+    En1_fun = lambda theta: grcwa_efficiencies(nG,[0,1,-1],cell_geometry,Nx,d,theta,freq)[-1]
+    E1_fun = lambda theta: grcwa_efficiencies(nG,[0,1,-1],cell_geometry,Nx,d,theta,freq)[1]
     pEn1_pTheta = grad(En1_fun)(0.)
-    # numerical_partial = (En1_fun(0.005) - En1_fun(-0.005)) / 0.01
+    pE1_pTheta = grad(E1_fun)(0.)
     
-    ## Speed of light and wavelength of the incident light
-    wavelength = c/freq
+    
 
     ## Relativistic terms
     v = beta*c
     gamma = 1/np.sqrt(1-beta**2)
-    '''
-    Not sure if this definition of D1 is entirely correct
-    '''
     D1 = np.sqrt((1-beta)/(1+beta))
 
+    ## Wavelength of the incident light
+    wavelength = D1*c/freq
+
+    Qpr1 = 2*e[0] + (e[1] + e[-1])*(1 + np.sqrt( 1 - (wavelength/d)**2 ))
+    pQpr2_pTheta = -2*e[0] - (pE1_pTheta - pEn1_pTheta)*(wavelength/d) - (e[1] + e[-1])*(1 + np.sqrt( 1 - (wavelength/d)**2 ))
+
     ## Transverse force
-    return -1*(1/v)*(D1**2)*( 2*(wavelength/d)*pEn1_pTheta*(1/D1 - 1) - (gamma-1)*(2*e[0] + 2*e[1]*(1 + np.sqrt( 1 - (wavelength/d)**2 ))) )
+    return -1*(1/v)*(D1**2)*(pQpr2_pTheta*(1/D1 - 1) + gamma*beta*Qpr1)
 
 def valid(vars):
     if len(vars) == 2:
@@ -648,6 +651,13 @@ def valid_eps(vars,d,Nx,x1,x2,w1,w2):
             w2 = w2 + d/(Nx-1)
 
         return vars,x1,x2,w1,w2
-
+    
     else:
         raise Exception("Incorrect length for input variables. You input vars of length",len(vars),", where length 2 or 4 are needed.")
+
+
+
+'''
+Objectives:
+    1) Change transverse force cost for a possibly asymmetric grating.
+'''

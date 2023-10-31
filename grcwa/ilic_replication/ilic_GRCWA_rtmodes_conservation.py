@@ -5,9 +5,9 @@ from matplotlib import pyplot as plt
 Being numerical in nature, I need to define the truncation order of the fourier decomposition as well as the resolution of the unit cell.
 '''
 # Truncation order
-nG = 50
+nG = 30
 # Resolution 
-Nx = 10000
+Nx = 41
 Ny = 1
 
 '''
@@ -134,7 +134,7 @@ for j in range(0,len(thetas)):
             Ts = np.append(Ts, sum(Ti[ords[:,0] == i]))
         else:
             # Sum of reflection and transmission in particular order
-            R_plus_Ts = np.append(Rs_plus_Ts, sum(Ri) + sum(Ti))
+            R_plus_Ts = np.append(Rs_plus_Ts, sum(Rs) + sum(Ts))
 
     # Construct matrix with jth row being the reflectance/transmittance for various orders at fixed angle of incidence
     Ris[j,:] = Rs
@@ -170,7 +170,7 @@ plt.title("Reflection and transmission coefficients for asymmetric Ilic-style gr
 plt.ylim([0,1.])
 plt.xlim([-20,20])
 
-plt.savefig('grcwa/ilic_replication/figs/ilic_GRCWA_rtmodes__conservation_nG{}'.format(nG))
+plt.savefig('grcwa/ilic_replication/figs/ilic_GRCWA_rtmodes__conservation_nG{}_Nx{}'.format(nG,Nx))
 plt.show()
 
 

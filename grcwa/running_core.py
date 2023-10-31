@@ -3,7 +3,7 @@ import numpy as np
 # Truncation order
 nG = 30
 # Resolution 
-Nx = 1801
+Nx = 180001
 
 # Permittivities
 E_vacuum = 1.
@@ -59,7 +59,7 @@ print("Efficiencies:", efficiencies)
 print("")
 from autograd import grad
 En1_fun = lambda theta: core.grcwa_efficiencies(nG,[0,1,-1],cell_geometry,Nx,d,theta,freq)[-1]
-E1_fun = lambda theta: core.grcwa_efficiencies(nG,[0,1,-1],cell_geometry,Nx,d,theta,freq)[1]
+E1_fun = lambda theta: core.grcwa_efficiencies(nG,[0,1,-1],cell_geometry ,Nx,d,theta,freq)[1]
 pEn1_pTheta = grad(En1_fun)(0.)
 pE1_pTheta = grad(E1_fun)(0.)
 

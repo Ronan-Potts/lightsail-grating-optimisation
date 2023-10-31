@@ -10,7 +10,7 @@ save_figs = True
 
 ## Discretisation values
 nG = 30
-Nx = 1801
+Nx = 18001
 
 ## Sail speed
 beta = 0.2

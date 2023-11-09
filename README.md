@@ -1,10 +1,5 @@
 # Optimising Gratings for LightSails
 
-## What is the project about?
-
-Something to do with optimising light sails
-### What is a light sail?
-
 ### What are we optimising?
 Want damping for the transverse and rotational motion of the lightsail. 
 * We can get this with diffraction gratings, but we need to be able to calculate the torques and forces on the sail for an arbitrary diffraction grating.
@@ -19,27 +14,3 @@ We are looking at three main softwares: GRCWA, MEEP, and Tidy3D.
 * **Meep:** uses FDTD (finite-difference time domain), discretising time to solve Maxwell's equations. This is less "intelligent" than GRCWA, but allows for more freedom in implementation, such as the use of a laser which is not a plane wave, or a diffraction grating of finite size.
 
 * **Tidy3D:** also uses FDTD, like Meep. Tidy3D extends Meep by incorporating the adjoint variable method to allow for optimisation of gratings, given a cost function.
-
-## Implememtation of Software
-
-### GRCWA
-
-What do the functions do? Give a high-level overview of what each file is doing.
-
-### Meep & Tidy3D
-
-What do the functions do? Give a high-level overview of what each file is doing.
-
-## Summary of Contents
-
-### GRCWA/
-
-What has been done in this folder?
-
-### Meep/
-
-What has been done in this folder?
-
-### Tidy3D/
-
-What has been done in this folder?
